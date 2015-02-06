@@ -1045,11 +1045,6 @@ static struct bio *split_bvec(struct bio *bio, sector_t sector,
 	int rc;
 
 	clone = bio_alloc_bioset(GFP_NOIO, 1, bs);
-	if (!clone) {
-		printk(KERN_WARNING "%s : %s() failed\n", __FILE__, __func__);
-		BUG_ON(1);
-	}
-
 	clone->bi_destructor = dm_bio_destructor;
 	*clone->bi_io_vec = *bv;
 
@@ -1082,10 +1077,6 @@ static struct bio *clone_bio(struct bio *bio, sector_t sector,
 	int rc;
 
 	clone = bio_alloc_bioset(GFP_NOIO, bio->bi_max_vecs, bs);
-	if (!clone) {
-		printk(KERN_WARNING "%s : %s() failed\n", __FILE__, __func__);
-		BUG_ON(1);
-	}
 	__bio_clone(clone, bio);
 	clone->bi_destructor = dm_bio_destructor;
 	clone->bi_sector = sector;
@@ -1131,10 +1122,6 @@ static void __issue_target_request(struct clone_info *ci, struct dm_target *ti,
 	 * and discard, so no need for concern about wasted bvec allocations.
 	 */
 	clone = bio_alloc_bioset(GFP_NOIO, ci->bio->bi_max_vecs, ci->md->bs);
-	if (!clone) {
-		printk(KERN_WARNING "%s : %s() failed\n", __FILE__, __func__);
-		BUG_ON(1);
-	}
 	__bio_clone(clone, ci->bio);
 	clone->bi_destructor = dm_bio_destructor;
 	if (len) {
