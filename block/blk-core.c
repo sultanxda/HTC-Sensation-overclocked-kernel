@@ -1435,12 +1435,9 @@ static inline void __generic_make_request(struct bio *bio)
 {
 	struct request_queue *q;
 	sector_t old_sector;
-	int ret, nr_sectors = 0;
+	int ret, nr_sectors = bio_sectors(bio);
 	dev_t old_dev;
 	int err = -EIO;
-
-	if (bio)
-		nr_sectors = bio_sectors(bio);
 
 	might_sleep();
 
