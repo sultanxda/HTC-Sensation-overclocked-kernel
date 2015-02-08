@@ -302,7 +302,7 @@ static bool msm_rpmrs_vdd_mem_beyond_limits(struct msm_rpmrs_limits *limits)
 		vdd_mem = MSM_RPMRS_VDD_MEM_ACTIVE;
 	}
 
-	return MSM_RPMRS_VDD(vdd_mem) >=
+	return MSM_RPMRS_VDD(vdd_mem) >
 				MSM_RPMRS_VDD(limits->vdd_mem_upper_bound);
 }
 
@@ -353,7 +353,7 @@ static bool msm_rpmrs_vdd_dig_beyond_limits(struct msm_rpmrs_limits *limits)
 		vdd_dig = MSM_RPMRS_VDD_DIG_ACTIVE;
 	}
 
-	return MSM_RPMRS_VDD(vdd_dig) >=
+	return MSM_RPMRS_VDD(vdd_dig) >
 				MSM_RPMRS_VDD(limits->vdd_dig_upper_bound);
 }
 
@@ -392,7 +392,7 @@ static bool msm_rpmrs_irqs_detectable(struct msm_rpmrs_limits *limits,
 		bool irqs_detect, bool gpio_detect)
 {
 
-	if (limits->vdd_dig <= MSM_RPMRS_VDD_DIG_RET_HIGH)
+	if (limits->vdd_dig_upper_bound <= MSM_RPMRS_VDD_DIG_RET_HIGH)
 		return irqs_detect;
 
 	if (limits->pxo == MSM_RPMRS_PXO_OFF)
@@ -977,14 +977,6 @@ static int rpmrs_cpu_callback(struct notifier_block *nfb,
 static struct notifier_block __refdata rpmrs_cpu_notifier = {
 	.notifier_call = rpmrs_cpu_callback,
 };
-
-void msm_rpmrs_lpm_init(uint32_t pxo, uint32_t l2_cache, uint32_t vdd_mem, uint32_t vdd_dig)
-{
-	msm_rpmrs_pxo.enable_low_power = pxo;
-	msm_rpmrs_l2_cache.enable_low_power = l2_cache;
-	msm_rpmrs_vdd_mem.enable_low_power = vdd_mem;
-	msm_rpmrs_vdd_dig.enable_low_power = vdd_dig;
-}
 
 int __init msm_rpmrs_levels_init(struct msm_rpmrs_level *levels, int size)
 {

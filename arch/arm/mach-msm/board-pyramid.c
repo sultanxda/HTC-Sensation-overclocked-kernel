@@ -5615,23 +5615,6 @@ static int __init board_serialno_setup(char *serialno)
 }
 __setup("androidboot.serialno=", board_serialno_setup);
 
-#define PM8058_LPM_SET(id)	(1 << RPM_VREG_ID_##id)
-#define PM8901_LPM_SET(id)	(1 << (RPM_VREG_ID_##id - RPM_VREG_ID_PM8901_L0))
-
-uint32_t __initdata regulator_lpm_set[] =
-{
-	PM8058_LPM_SET(PM8058_L0) | PM8058_LPM_SET(PM8058_L1) | PM8058_LPM_SET(PM8058_L2) |
-	PM8058_LPM_SET(PM8058_L5) | PM8058_LPM_SET(PM8058_L6) | PM8058_LPM_SET(PM8058_L7) |
-	PM8058_LPM_SET(PM8058_L8) | PM8058_LPM_SET(PM8058_L9) | PM8058_LPM_SET(PM8058_L10) |
-	PM8058_LPM_SET(PM8058_L11) | PM8058_LPM_SET(PM8058_L12) | PM8058_LPM_SET(PM8058_L13) |
-	PM8058_LPM_SET(PM8058_L15) | PM8058_LPM_SET(PM8058_L16) | PM8058_LPM_SET(PM8058_L17) |
-	PM8058_LPM_SET(PM8058_L18) | PM8058_LPM_SET(PM8058_L19) | PM8058_LPM_SET(PM8058_L20) |
-	PM8058_LPM_SET(PM8058_L21) | PM8058_LPM_SET(PM8058_L22) | PM8058_LPM_SET(PM8058_L23) |
-	PM8058_LPM_SET(PM8058_L24) | PM8058_LPM_SET(PM8058_L25),
-	PM8901_LPM_SET(PM8901_L0) | PM8901_LPM_SET(PM8901_L2) | PM8901_LPM_SET(PM8901_L3) |
-	PM8901_LPM_SET(PM8901_L5) | PM8901_LPM_SET(PM8901_L6),
-};
-
 static void __init msm8x60_init(struct msm_board_data *board_data)
 {
 	uint32_t soc_platform_version;
@@ -5653,16 +5636,6 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 #endif
 	BUG_ON(msm_rpmrs_levels_init(msm_rpmrs_levels,
 				ARRAY_SIZE(msm_rpmrs_levels)));
-
-	/*
-	* Set low power mode of rpm resources:
-	*    PXO	= OFF
-	*    L2_cache	= OFF
-	*    Vdd_min	= 0.5v
-	*    Vdd_dig	= 0.5v
-	*/
-	msm_rpmrs_lpm_init(1, 1, 2, 2);
-	msm_rpm_lpm_init(regulator_lpm_set, ARRAY_SIZE(regulator_lpm_set));
 
 	if (msm_xo_init())
 		pr_err("Failed to initialize XO votes\n");
