@@ -86,10 +86,6 @@ extern void msm_free_iova_address(unsigned long iova,
 			unsigned int partition_no,
 			unsigned long size);
 
-extern unsigned long msm_subsystem_get_domain_no(int subsys_id);
-
-extern unsigned long msm_subsystem_get_partition_no(int subsys_id);
-
 extern int msm_use_iommu(void);
 
 extern int msm_iommu_map_extra(struct iommu_domain *domain,
@@ -135,16 +131,6 @@ static inline void msm_free_iova_address(unsigned long iova,
 			unsigned int partition_no,
 			unsigned long size) { return; }
 
-static inline unsigned long msm_subsystem_get_domain_no(int subsys_id)
-{
-	return 0xFFFFFFFF;
-}
-
-static inline unsigned long msm_subsystem_get_partition_no(int subsys_id)
-{
-	return 0xFFFFFFFF;
-}
-
 static inline int msm_use_iommu(void)
 {
 	return 0;
@@ -157,6 +143,7 @@ static inline int msm_iommu_map_extra(struct iommu_domain *domain,
 						int cached)
 {
 	return -ENODEV;
+
 }
 
 static inline void msm_iommu_unmap_extra(struct iommu_domain *domain,
