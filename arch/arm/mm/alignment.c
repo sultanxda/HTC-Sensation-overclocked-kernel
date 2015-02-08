@@ -717,7 +717,7 @@ do_alignment_t32_to_handler(unsigned long *pinstr, struct pt_regs *regs,
 static int
 do_alignment(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 {
-	union offset_union uninitialized_var(offset);
+	union offset_union offset;
 	unsigned long instr = 0, instrptr;
 	int (*handler)(unsigned long addr, unsigned long instr, struct pt_regs *regs);
 	unsigned int type;
@@ -726,6 +726,8 @@ do_alignment(unsigned long addr, unsigned int fsr, struct pt_regs *regs)
 	u16 tinstr = 0;
 	int isize = 4;
 	int thumb2_32b = 0;
+
+	offset.un = 0;
 
 	instrptr = instruction_pointer(regs);
 
