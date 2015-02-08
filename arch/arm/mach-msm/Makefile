@@ -23,7 +23,6 @@ endif
 endif
 
 obj-y += acpuclock.o
-obj-y += radio_feedback.o
 obj-$(CONFIG_ARCH_MSM7X01A) += acpuclock-7201.o
 obj-$(CONFIG_ARCH_MSM7X25) += acpuclock-7201.o
 obj-$(CONFIG_ARCH_MSM7X27) += acpuclock-7201.o
@@ -53,11 +52,6 @@ obj-$(CONFIG_MSM_JTAG) += jtag.o
 msm-etm-objs := etm.o
 obj-$(CONFIG_MSM_ETM) += msm-etm.o
 obj-$(CONFIG_MSM_QDSS) += qdss.o qdss-etb.o qdss-tpiu.o qdss-funnel.o qdss-etm.o
-ifdef CONFIG_MSM_NONSMD_PACKET_FILTER
-obj-$(CONFIG_MSM_SMD) += htc_port_list_lte.o
-else
-obj-$(CONFIG_MSM_SMD) += htc_port_list.o
-endif
 
 quiet_cmd_mkrpcsym = MKCAP   $@
       cmd_mkrpcsym = $(PERL) $(srctree)/$(src)/mkrpcsym.pl $< $@
@@ -142,8 +136,6 @@ obj-$(CONFIG_MSM_RPCSERVER_HANDSET) += rpc_server_handset.o
 obj-$(CONFIG_MSM_QDSP6) += qdsp6/
 obj-$(CONFIG_MSM8X60_AUDIO) += qdsp6v2/
 obj-$(CONFIG_MSM_AUDIO_QDSP6) += qdsp6v2/
-obj-$(CONFIG_MSM_AUDIO_QDSP6V2) += qdsp6v2/
-
 obj-$(CONFIG_MSM_HW3D) += hw3d.o
 obj-$(CONFIG_PM) += pm-boot.o
 obj-$(CONFIG_MSM_PM8X60) += pm-8x60.o
@@ -176,6 +168,7 @@ obj-$(CONFIG_ARCH_MSM8X60) += rpm-regulator-8660.o
 obj-$(CONFIG_ARCH_MSM8960) += rpm-regulator-8960.o
 obj-$(CONFIG_ARCH_MSM9615) += rpm-regulator-9615.o
 endif
+
 ifdef CONFIG_MSM_SUBSYSTEM_RESTART
 	obj-y += subsystem_notif.o
 	obj-y += subsystem_restart.o
@@ -202,7 +195,6 @@ obj-$(CONFIG_ARCH_FSM9XXX) += dfe-fsm9xxx.o rfic-fsm9xxx.o
 obj-$(CONFIG_ARCH_FSM9XXX) += restart-fsm9xxx.o xo-fsm9xxx.o
 
 obj-$(CONFIG_MSM_WATCHDOG) += msm_watchdog.o
-obj-$(CONFIG_MSM_WATCHDOG) += htc_watchdog_monitor.o
 obj-$(CONFIG_MACH_MSM8X60_RUMI3) += board-msm8x60.o
 obj-$(CONFIG_MACH_MSM8X60_SIM) += board-msm8x60.o
 obj-$(CONFIG_MACH_MSM8X60_SURF) += board-msm8x60.o
@@ -250,7 +242,7 @@ obj-$(CONFIG_MACH_APQ8064_RUMI3) += board-8064-all.o board-8064-regulator.o
 obj-$(CONFIG_ARCH_MSM9615) += board-9615.o devices-9615.o board-9615-regulator.o board-9615-gpiomux.o board-9615-storage.o
 obj-$(CONFIG_ARCH_MSM9615) += clock-local.o clock-9615.o acpuclock-9615.o clock-rpm.o
 obj-$(CONFIG_ARCH_MSMCOPPER) += board-copper.o board-dt.o
-obj-$(CONFIG_ARCH_MSM8X60) += devices_htc.o htc_wifi_nvs.o sysinfo-8x60.o emmc_partitions.o htc_awb_cal.o
+obj-$(CONFIG_ARCH_MSM8X60) += devices_htc.o htc_wifi_nvs.o emmc_partitions.o htc_awb_cal.o
 
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire.o board-sapphire-gpio.o
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire-keypad.o board-sapphire-panel.o
