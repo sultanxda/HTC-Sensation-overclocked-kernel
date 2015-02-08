@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+/* Copyright (c) 2012, The Linux Foundation. All rights reserved.
  * Copyright (c) 2013 Sebastian Sobczyk <sebastiansobczyk@wp.pl>
  *
  * Copyright (c) 2014 Sultanxda <sultanxda@gmail.com>
