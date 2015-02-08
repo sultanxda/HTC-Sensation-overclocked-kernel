@@ -114,30 +114,13 @@ struct platform_device msm_camera_sensor_webcam;
 #define GSBI12_DEV (&msm_gsbi12_qup_i2c_device.dev)
 #endif
 
-struct _irq_state *irq_count_info_ptr;
-struct _handle_irq *handle_irq;
-
 void __init msm8x60_init_irq(void)
 {
-	unsigned int i;
-
 	msm_mpm_irq_extn_init();
 	gic_init(0, GIC_PPI_START, MSM_QGIC_DIST_BASE, (void *)MSM_QGIC_CPU_BASE);
 
 	/* Edge trigger PPIs except AVS_SVICINT and AVS_SVICINTSWDONE */
 	writel(0xFFFFD7FF, MSM_QGIC_DIST_BASE + GIC_DIST_CONFIG + 4);
-
-	irq_count_info_ptr = MSM_IRQ_COUNT_ADDR;
-	handle_irq = MSM_DO_IRQ_INFO_BASE;
-
-	/* FIXME: Not installing AVS_SVICINT and AVS_SVICINTSWDONE yet
-	 * as they are configured as level, which does not play nice with
-	 * handle_percpu_irq.
-	 */
-	for (i = GIC_PPI_START; i < GIC_SPI_START; i++) {
-		if (i != AVS_SVICINT && i != AVS_SVICINTSWDONE)
-			irq_set_handler(i, handle_percpu_irq);
-	}
 }
 
 static struct resource msm_uart1_dm_resources[] = {
