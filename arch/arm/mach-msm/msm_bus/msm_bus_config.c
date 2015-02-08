@@ -16,7 +16,6 @@
 #include <linux/mutex.h>
 #include <linux/radix-tree.h>
 #include <linux/clk.h>
-#include <linux/delay.h>
 #include <mach/msm_bus_board.h>
 #include <mach/msm_bus.h>
 #include "msm_bus_core.h"
@@ -29,7 +28,7 @@ static DEFINE_MUTEX(msm_bus_config_lock);
  */
 int msm_bus_axi_porthalt(int master_port)
 {
-	int ret = 0, try_times = 100;
+	int ret = 0;
 	int priv_id;
 	struct msm_bus_fabric_device *fabdev;
 
@@ -42,17 +41,9 @@ int msm_bus_axi_porthalt(int master_port)
 			master_port);
 		return -ENODEV;
 	}
-retry:
 	mutex_lock(&msm_bus_config_lock);
 	ret = fabdev->algo->port_halt(fabdev, priv_id);
 	mutex_unlock(&msm_bus_config_lock);
-	if (ret) {
-		if (try_times--) {
-			msleep(1);
-			goto retry;
-		}
-		MSM_BUS_ERR("msm_bus_axi_porthalt try failure, ret=%d\n", ret);
-	}
 	return ret;
 }
 EXPORT_SYMBOL(msm_bus_axi_porthalt);
@@ -63,7 +54,7 @@ EXPORT_SYMBOL(msm_bus_axi_porthalt);
  */
 int msm_bus_axi_portunhalt(int master_port)
 {
-	int ret = 0, try_times = 100;
+	int ret = 0;
 	int priv_id;
 	struct msm_bus_fabric_device *fabdev;
 
@@ -76,17 +67,9 @@ int msm_bus_axi_portunhalt(int master_port)
 			master_port);
 		return -ENODEV;
 	}
-retry:
 	mutex_lock(&msm_bus_config_lock);
 	ret = fabdev->algo->port_unhalt(fabdev, priv_id);
 	mutex_unlock(&msm_bus_config_lock);
-	if (ret) {
-		if (try_times--) {
-			msleep(1);
-			goto retry;
-		}
-		MSM_BUS_ERR("msm_bus_axi_portunhalt try failure, ret=%d\n", ret);
-	}
 	return ret;
 }
 EXPORT_SYMBOL(msm_bus_axi_portunhalt);

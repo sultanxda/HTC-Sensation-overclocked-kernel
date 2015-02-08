@@ -83,6 +83,7 @@ static int msm_xo_show_voters(struct seq_file *m, void *v)
 	msm_xo_dump_xo(m, &msm_xo_sources[MSM_XO_TCXO_A2], "TCXO A2");
 	msm_xo_dump_xo(m, &msm_xo_sources[MSM_XO_CORE], "TCXO Core");
 	msm_xo_dump_xo(m, &msm_xo_sources[MSM_XO_PXO], "PXO during sleep");
+	msm_xo_dump_xo(m, &msm_xo_sources[MSM_XO_CXO], "CXO");
 	spin_unlock_irqrestore(&msm_xo_lock, flags);
 
 	return 0;
@@ -137,6 +138,10 @@ static int msm_xo_update_vote(struct msm_xo *xo)
 		cmd.id = MSM_RPM_ID_PXO_CLK;
 		cmd.value = msm_xo_sources[MSM_XO_PXO].mode ? 1 : 0;
 		ret = msm_rpmrs_set_noirq(MSM_RPM_CTX_SET_SLEEP, &cmd, 1);
+	} else if (xo == &msm_xo_sources[MSM_XO_CXO]) {
+		cmd.id = MSM_RPM_ID_CXO_CLK;
+		cmd.value = msm_xo_sources[MSM_XO_CXO].mode ? 1 : 0;
+		ret = msm_rpmrs_set_noirq(MSM_RPM_CTX_SET_0, &cmd, 1);
 	} else {
 		cmd.id = MSM_RPM_ID_CXO_BUFFERS;
 		cmd.value = (msm_xo_sources[MSM_XO_TCXO_D0].mode << 0)  |
@@ -144,7 +149,14 @@ static int msm_xo_update_vote(struct msm_xo *xo)
 			    (msm_xo_sources[MSM_XO_TCXO_A0].mode << 16) |
 			    (msm_xo_sources[MSM_XO_TCXO_A1].mode << 24) |
 			    (msm_xo_sources[MSM_XO_TCXO_A2].mode << 28) |
-			    ((msm_xo_sources[MSM_XO_CORE].mode ? 1 : 0) << 20);
+			    /*
+			     * 8660 RPM has XO_CORE at bit 18 and 8960 RPM has
+			     * XO_CORE at bit 20. Since the opposite bit is
+			     * reserved in both cases, just set both and be
+			     * done with it.
+			     */
+			    ((msm_xo_sources[MSM_XO_CORE].mode ? 1 : 0) << 20) |
+			    ((msm_xo_sources[MSM_XO_CORE].mode ? 1 : 0) << 18);
 		ret = msm_rpm_set_noirq(MSM_RPM_CTX_SET_0, &cmd, 1);
 	}
 

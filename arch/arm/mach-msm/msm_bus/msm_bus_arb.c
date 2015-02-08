@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -283,7 +283,7 @@ static int update_path(int curr, int pnode, unsigned long req_clk, unsigned
 	struct msm_bus_inode_info *info;
 	int next_pnode;
 	long int add_bw = req_bw - curr_bw;
-	unsigned long bwsum = 0;
+	unsigned bwsum = 0;
 	unsigned req_clk_hz, curr_clk_hz, bwsum_hz;
 	int *master_tiers;
 	struct msm_bus_fabric_device *fabdev = msm_bus_get_fabric_device
@@ -305,7 +305,13 @@ static int update_path(int curr, int pnode, unsigned long req_clk, unsigned
 	*info->link_info.sel_bw += add_bw;
 
 	info->pnode[index].sel_bw = &info->pnode[index].bw[ctx];
-	info->pnode[index].sel_clk = &info->pnode[index].clk[ctx];
+
+	/**
+	 * To select the right clock, AND the context with
+	 * client active flag.
+	 */
+	info->pnode[index].sel_clk = &info->pnode[index].clk[ctx &
+		cl_active_flag];
 	*info->pnode[index].sel_bw += add_bw;
 
 	info->link_info.num_tiers = info->node_info->num_tiers;
@@ -345,7 +351,8 @@ static int update_path(int curr, int pnode, unsigned long req_clk, unsigned
 		*hop->link_info.sel_bw += add_bw;
 
 		hop->pnode[index].sel_bw = &hop->pnode[index].bw[ctx];
-		hop->pnode[index].sel_clk = &hop->pnode[index].clk[ctx];
+		hop->pnode[index].sel_clk = &hop->pnode[index].clk[ctx &
+			cl_active_flag];
 
 		if (!hop->node_info->buswidth) {
 			MSM_BUS_WARN("No bus width found. Using default\n");
@@ -360,7 +367,7 @@ static int update_path(int curr, int pnode, unsigned long req_clk, unsigned
 		/* Update Bandwidth */
 		fabdev->algo->update_bw(fabdev, hop, info, add_bw,
 			master_tiers, ctx);
-		bwsum = (uint32_t)*hop->link_info.sel_bw;
+		bwsum = (uint16_t)*hop->link_info.sel_bw;
 		/* Update Fabric clocks */
 		curr_clk_hz = BW_TO_CLK_FREQ_HZ(hop->node_info->buswidth,
 			curr_clk);

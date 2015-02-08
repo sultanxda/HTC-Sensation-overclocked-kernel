@@ -130,6 +130,7 @@
 #include <linux/platform_data/qcom_crypto_device.h>
 #include "rpm_resources.h"
 #include "acpuclock.h"
+#include "board-storage-common-a.h"
 #include <mach/board_htc.h>
 
 #ifdef CONFIG_PERFLOCK
@@ -5145,7 +5146,6 @@ static uint32_t msm_rpm_get_swfi_latency(void)
 }
 
 #ifdef CONFIG_MMC_MSM_SDC1_SUPPORT
-static unsigned int pyramid_emmcslot_type = MMC_TYPE_MMC;
 static struct mmc_platform_data msm8x60_sdc1_data = {
 	.ocr_mask       = MMC_VDD_27_28 | MMC_VDD_28_29,
 #ifdef CONFIG_MMC_MSM_SDC1_8_BIT_SUPPORT
@@ -5153,12 +5153,12 @@ static struct mmc_platform_data msm8x60_sdc1_data = {
 #else
 	.mmc_bus_width  = MMC_CAP_4_BIT_DATA,
 #endif
-	.slot_type	= &pyramid_emmcslot_type,
 	.msmsdcc_fmin	= 400000,
 	.msmsdcc_fmid	= 24000000,
 	.msmsdcc_fmax	= 48000000,
 	.nonremovable	= 1,
 	.pclk_src_dfab	= 1,
+	.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 };
 #endif
 
@@ -5174,11 +5174,11 @@ static struct mmc_platform_data msm8x60_sdc2_data = {
 	.nonremovable	= 0,
 	.pclk_src_dfab  = 1,
 	.register_status_notify = sdc2_register_status_notify,
+	.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 };
 #endif
 
 #ifdef CONFIG_MMC_MSM_SDC3_SUPPORT
-static unsigned int pyramid_sdslot_type = MMC_TYPE_SD;
 static struct mmc_platform_data msm8x60_sdc3_data = {
 	.ocr_mask       = MMC_VDD_27_28 | MMC_VDD_28_29,
 	.translate_vdd  = msm_sdcc_setup_power,
@@ -5192,12 +5192,12 @@ static struct mmc_platform_data msm8x60_sdc3_data = {
 				       PYRAMID_SDC3_DET),
 	.irq_flags   = IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING,
 #endif
-	.slot_type	= &pyramid_sdslot_type,
 	.msmsdcc_fmin	= 400000,
 	.msmsdcc_fmid	= 24000000,
 	.msmsdcc_fmax	= 48000000,
 	.nonremovable	= 0,
 	.pclk_src_dfab  = 1,
+	.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 };
 #endif
 
@@ -5213,6 +5213,7 @@ static struct mmc_platform_data msm8x60_sdc5_data = {
 	.nonremovable	= 0,
 	.pclk_src_dfab  = 1,
 	.register_status_notify = sdc5_register_status_notify,
+	.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 };
 #endif
 
@@ -5700,11 +5701,6 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 
 	/* Initialize regulators needed for clock_init. */
 	platform_add_devices(early_regulators, ARRAY_SIZE(early_regulators));
-
-	/*added by htc for clock debugging*/
-	clk_ignor_list_add("msm_serial_hsl.0", "core_clk");
-	clk_ignor_list_add("msm_sdcc.4", "core_clk");
-	clk_ignor_list_add("msm_sdcc.4", "iface_clk");
 
 	msm_clock_init(&msm8x60_clock_init_data);
 

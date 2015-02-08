@@ -31,6 +31,7 @@
 
 #include "devices.h"
 #include "board-pyramid.h"
+#include "board-storage-common-a.h"
 #include "proc_comm.h"
 #include <mach/msm_iomap.h>
 #include <linux/mfd/pmic8058.h>
@@ -152,19 +153,18 @@ static unsigned int pyramid_wifi_status(struct device *dev)
 	return pyramid_wifi_cd;
 }
 
-static unsigned int pyramid_wifislot_type = MMC_TYPE_SDIO_WIFI;
 static struct mmc_platform_data pyramid_wifi_data = {
         .ocr_mask               = MMC_VDD_28_29,
         .status                 = pyramid_wifi_status,
         .register_status_notify = pyramid_wifi_status_register,
         .embedded_sdio          = &pyramid_wifi_emb_data,
         .mmc_bus_width  = MMC_CAP_4_BIT_DATA,
-        .slot_type = &pyramid_wifislot_type,
         .msmsdcc_fmin   = 400000,
         .msmsdcc_fmid   = 24000000,
         .msmsdcc_fmax   = 48000000,
         .nonremovable   = 1,
 	.pclk_src_dfab	= 1,
+	.msm_bus_voting_data = &sps_to_ddr_bus_voting_data,
 	//.cfg_mpm_sdiowakeup = msm_sdcc_cfg_mpm_sdiowakeup,
 	// HTC_WIFI_MOD, temp remove dummy52
 	//.dummy52_required = 1,

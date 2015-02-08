@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -57,7 +57,7 @@ static int msm_bus_fabric_add_node(struct msm_bus_fabric *fabric,
 	struct msm_bus_inode_info *info)
 {
 	int status = -ENOMEM;
-	MSM_FAB_DBG("msm_bus_fabric_add_node: ID %d Gw: %d\n",
+	MSM_BUS_DBG("msm_bus_fabric_add_node: ID %d Gw: %d\n",
 		info->node_info->priv_id, info->node_info->gateway);
 	status = radix_tree_preload(GFP_ATOMIC);
 	if (status)
@@ -71,7 +71,7 @@ static int msm_bus_fabric_add_node(struct msm_bus_fabric *fabric,
 			SLAVE_NODE);
 
 	if (info->node_info->slaveclk[DUAL_CTX]) {
-		info->nodeclk[DUAL_CTX].clk = clk_get(NULL,
+		info->nodeclk[DUAL_CTX].clk = clk_get_sys("msm_bus",
 			info->node_info->slaveclk[DUAL_CTX]);
 		if (IS_ERR(info->nodeclk[DUAL_CTX].clk)) {
 			MSM_BUS_ERR("Could not get clock for %s\n",
@@ -96,7 +96,7 @@ static int msm_bus_fabric_add_fab(struct msm_bus_fabric *fabric,
 	struct msm_bus_inode_info *info)
 {
 	struct msm_bus_fabnodeinfo *fabnodeinfo;
-	MSM_FAB_DBG("msm_bus_fabric_add_fab: ID %d Gw: %d\n",
+	MSM_BUS_DBG("msm_bus_fabric_add_fab: ID %d Gw: %d\n",
 		info->node_info->priv_id, info->node_info->gateway);
 	fabnodeinfo = kzalloc(sizeof(struct msm_bus_fabnodeinfo), GFP_KERNEL);
 	if (fabnodeinfo == NULL) {
@@ -125,7 +125,7 @@ static int register_fabric_info(struct msm_bus_fabric *fabric)
 {
 	int i, ret = 0, err = 0;
 
-	MSM_FAB_DBG("id:%d pdata-id: %d len: %d\n", fabric->fabdev.id,
+	MSM_BUS_DBG("id:%d pdata-id: %d len: %d\n", fabric->fabdev.id,
 		fabric->pdata->id, fabric->pdata->len);
 
 	for (i = 0; i < fabric->pdata->len; i++) {
@@ -144,8 +144,8 @@ static int register_fabric_info(struct msm_bus_fabric *fabric)
 
 		for (ctx = 0; ctx < NUM_CTX; ctx++) {
 			if (info->node_info->slaveclk[ctx]) {
-				info->nodeclk[ctx].clk = clk_get(NULL,
-						info->node_info->slaveclk[ctx]);
+				info->nodeclk[ctx].clk = clk_get_sys("msm_bus",
+					info->node_info->slaveclk[ctx]);
 				if (IS_ERR(info->nodeclk[ctx].clk)) {
 					MSM_BUS_ERR("Couldn't get clk %s\n",
 						info->node_info->slaveclk[ctx]);
@@ -156,7 +156,7 @@ static int register_fabric_info(struct msm_bus_fabric *fabric)
 			}
 		}
 		if (info->node_info->memclk) {
-			info->memclk.clk = clk_get(NULL,
+			info->memclk.clk = clk_get_sys("msm_bus",
 					info->node_info->memclk);
 			if (IS_ERR(info->memclk.clk)) {
 				MSM_BUS_ERR("Couldn't get clk %s\n",
@@ -179,12 +179,12 @@ static int register_fabric_info(struct msm_bus_fabric *fabric)
 
 	fabric->rpm_data = allocate_rpm_data(fabric->pdata);
 
-	MSM_FAB_DBG("Fabric: %d nmasters: %d nslaves: %d\n"
+	MSM_BUS_DBG("Fabric: %d nmasters: %d nslaves: %d\n"
 		" ntieredslaves: %d, rpm_enabled: %d\n",
 		fabric->fabdev.id, fabric->pdata->nmasters,
 		fabric->pdata->nslaves, fabric->pdata->ntieredslaves,
 		fabric->pdata->rpm_enabled);
-	MSM_FAB_DBG("msm_bus_register_fabric_info i: %d\n", i);
+	MSM_BUS_DBG("msm_bus_register_fabric_info i: %d\n", i);
 	fabric->num_nodes = fabric->pdata->len;
 error:
 	fabric->num_nodes = i;
@@ -216,6 +216,13 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 	struct msm_bus_fabric *fabric = to_msm_bus_fabric(fabdev);
 	struct nodeclk *nodeclk;
 
+	/**
+	 * Integration for clock rates is not required if context is not
+	 * same as client's active-only flag
+	 */
+	if (ctx != cl_active_flag)
+		goto skip_set_clks;
+
 	/* Maximum for this gateway */
 	for (i = 0; i <= slave->num_pnodes; i++) {
 		if (i == index && (req_clk_hz < curr_clk_hz))
@@ -238,7 +245,7 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 			info->link_info.sel_clk = &info->link_info.clk[ctx];
 			max_pclk = max(max_pclk, *info->link_info.sel_clk);
 		}
-		MSM_FAB_DBG("max_pclk from gateways: %lu\n", max_pclk);
+		MSM_BUS_DBG("max_pclk from gateways: %lu\n", max_pclk);
 
 		/* Maximum of all slave clocks. */
 
@@ -255,7 +262,7 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 		}
 
 
-		MSM_FAB_DBG("max_pclk from slaves & gws: %lu\n", max_pclk);
+		MSM_BUS_DBG("max_pclk from slaves & gws: %lu\n", max_pclk);
 		fabric->info.link_info.sel_clk =
 			&fabric->info.link_info.clk[ctx];
 		pclk = fabric->info.link_info.sel_clk;
@@ -272,13 +279,7 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 
 	if (clk_flag) {
 		nodeclk = &fabric->info.nodeclk[ctx];
-		/**
-		 * Send a clock request only when the client requests in active
-		 * context and the ACTIVE_CTX clock rate is selected OR the
-		 * client request is in normal context and normal clock rate
-		 * is selected.
-		 */
-		if (nodeclk->clk && (!((ctx == ACTIVE_CTX) ^ cl_active_flag))) {
+		if (nodeclk->clk) {
 			MSM_BUS_DBG("clks: id: %d set-clk: %lu bwsum_hz:%lu\n",
 			fabric->fabdev.id, *pclk, bwsum_hz);
 			if (nodeclk->rate != *pclk) {
@@ -289,7 +290,7 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 		}
 	} else {
 		nodeclk = &slave->nodeclk[ctx];
-		if (nodeclk->clk && (!((ctx == ACTIVE_CTX) ^ cl_active_flag))) {
+		if (nodeclk->clk) {
 			rate = *pclk;
 			MSM_BUS_DBG("AXI_clks: id: %d set-clk: %lu "
 			"bwsum_hz: %lu\n" , slave->node_info->priv_id, rate,
@@ -299,8 +300,7 @@ static int msm_bus_fabric_update_clks(struct msm_bus_fabric_device *fabdev,
 				nodeclk->rate = rate;
 			}
 		}
-		if (!status && slave->memclk.clk &&
-			(!((ctx == ACTIVE_CTX) ^ cl_active_flag))) {
+		if (!status && slave->memclk.clk) {
 			rate = *slave->link_info.sel_clk;
 			if (slave->memclk.rate != rate) {
 				slave->memclk.rate = rate;
@@ -325,7 +325,7 @@ void msm_bus_fabric_update_bw(struct msm_bus_fabric_device *fabdev,
 
 	/* If it's an ahb fabric, don't calculate arb values */
 	if (fabric->ahb) {
-		MSM_FAB_DBG("AHB fabric, skipping bw calculation\n");
+		MSM_BUS_DBG("AHB fabric, skipping bw calculation\n");
 		return;
 	}
 	if (!add_bw) {
@@ -486,9 +486,9 @@ int msm_bus_fabric_port_halt(struct msm_bus_fabric_device *fabdev, int iid)
 	rpm_data[1].id = haltid + 1;
 	rpm_data[1].value = hvector.haltmask;
 
-	MSM_FAB_DBG("ctx: %d, id: %d, value: %d\n",
+	MSM_BUS_DBG("ctx: %d, id: %d, value: %d\n",
 		MSM_RPM_CTX_SET_0, rpm_data[0].id, rpm_data[0].value);
-	MSM_FAB_DBG("ctx: %d, id: %d, value: %d\n",
+	MSM_BUS_DBG("ctx: %d, id: %d, value: %d\n",
 		MSM_RPM_CTX_SET_0, rpm_data[1].id, rpm_data[1].value);
 
 	if (fabric->pdata->rpm_enabled)
@@ -529,9 +529,9 @@ int msm_bus_fabric_port_unhalt(struct msm_bus_fabric_device *fabdev, int iid)
 	rpm_data[1].id = haltid + 1;
 	rpm_data[1].value = hvector.haltmask;
 
-	MSM_FAB_DBG("unalt: ctx: %d, id: %d, value: %d\n",
+	MSM_BUS_DBG("unalt: ctx: %d, id: %d, value: %d\n",
 		MSM_RPM_CTX_SET_SLEEP, rpm_data[0].id, rpm_data[0].value);
-	MSM_FAB_DBG("unhalt: ctx: %d, id: %d, value: %d\n",
+	MSM_BUS_DBG("unhalt: ctx: %d, id: %d, value: %d\n",
 		MSM_RPM_CTX_SET_SLEEP, rpm_data[1].id, rpm_data[1].value);
 
 	if (fabric->pdata->rpm_enabled)
@@ -582,7 +582,7 @@ static struct msm_bus_inode_info *msm_bus_fabric_find_node(struct
 	struct msm_bus_fabric *fabric = to_msm_bus_fabric(fabdev);
 	info = radix_tree_lookup(&fabric->fab_tree, id);
 	if (!info)
-		MSM_FAB_DBG("Null info found for id %d\n", id);
+		MSM_BUS_ERR("Null info found for id %d\n", id);
 	return info;
 }
 
@@ -652,10 +652,21 @@ static int msm_bus_fabric_probe(struct platform_device *pdev)
 		fabric->fabdev.id);
 	fabric->fabdev.board_algo = fabric->pdata->board_algo;
 
+	/*
+	 * clk and bw for fabric->info will contain the max bw and clk
+	 * it will allow. This info will come from the boards file.
+	 */
+	ret = msm_bus_fabric_device_register(&fabric->fabdev);
+	if (ret) {
+		MSM_BUS_ERR("Error registering fabric %d ret %d\n",
+			fabric->fabdev.id, ret);
+		goto err;
+	}
+
 	for (ctx = 0; ctx < NUM_CTX; ctx++) {
 		if (pdata->fabclk[ctx]) {
-			fabric->info.nodeclk[ctx].clk = clk_get(NULL,
-							pdata->fabclk[ctx]);
+			fabric->info.nodeclk[ctx].clk = clk_get(
+				&fabric->fabdev.dev, pdata->fabclk[ctx]);
 			if (IS_ERR(fabric->info.nodeclk[ctx].clk)) {
 				MSM_BUS_ERR("Couldn't get clock %s\n",
 					pdata->fabclk[ctx]);
@@ -686,16 +697,6 @@ static int msm_bus_fabric_probe(struct platform_device *pdev)
 				goto err;
 			}
 		}
-	}
-	/*
-	 * clk and bw for fabric->info will contain the max bw and clk
-	 * it will allow. This info will come from the boards file.
-	 */
-	ret = msm_bus_fabric_device_register(&fabric->fabdev);
-	if (ret) {
-		MSM_BUS_ERR("Error registering fabric %d ret %d\n",
-			fabric->fabdev.id, ret);
-		goto err;
 	}
 
 	return ret;

@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -70,6 +70,8 @@ extern struct msm_bus_fabric_registration msm_bus_8064_mm_fabric_pdata;
 extern struct msm_bus_fabric_registration msm_bus_8064_sys_fpb_pdata;
 extern struct msm_bus_fabric_registration msm_bus_8064_cpss_fpb_pdata;
 
+extern struct msm_bus_fabric_registration msm_bus_9615_sys_fabric_pdata;
+extern struct msm_bus_fabric_registration msm_bus_9615_def_fab_pdata;
 void msm_bus_rpm_set_mt_mask(void);
 int msm_bus_board_rpm_get_il_ids(uint16_t *id);
 int msm_bus_board_get_iid(int id);
@@ -235,6 +237,7 @@ enum msm_bus_fabric_slave_type {
 	MSM_BUS_MMSS_SLAVE_FAB_APPS,
 	MSM_BUS_MMSS_SLAVE_FAB_APPS_1,
 	MSM_BUS_SLAVE_MM_IMEM,
+	MSM_BUS_SLAVE_CRYPTO,
 
 	MSM_BUS_SLAVE_SPDM,
 	MSM_BUS_SLAVE_RPM,
