@@ -5800,7 +5800,6 @@ static void __init msm8x60_init(struct msm_board_data *board_data)
 	pyramid_audio_init();
 #endif
 
-	sysinfo_proc_init();
 	properties_kobj = kobject_create_and_add("board_properties", NULL);
 	if (properties_kobj)
 		ret = sysfs_create_group(properties_kobj,

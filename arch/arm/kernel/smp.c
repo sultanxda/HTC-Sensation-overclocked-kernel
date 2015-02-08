@@ -634,7 +634,6 @@ void smp_send_stop(void)
 
 	if (num_online_cpus() > 1) {
 		cpumask_t mask = cpu_online_map;
-		cpu_hotplug_disabled = 1;
 		cpu_clear(smp_processor_id(), mask);
 
 		smp_cross_call(&mask, IPI_CPU_STOP);

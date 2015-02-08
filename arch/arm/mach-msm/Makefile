@@ -285,7 +285,7 @@ obj-$(CONFIG_ARCH_MSM9615) += clock-local.o clock-9615.o acpuclock-9615.o clock-
 obj-$(CONFIG_ARCH_MSM9615) += rpm-regulator.o rpm-regulator-9615.o
 obj-$(CONFIG_ARCH_MSMCOPPER) += board-copper.o board-dt.o
 obj-$(CONFIG_ARCH_MSM8960) += devices_htc.o htc_wifi_nvs.o htc_awb_cal.o
-obj-$(CONFIG_ARCH_MSM8X60) += devices_htc.o htc_wifi_nvs.o sysinfo-8x60.o emmc_partitions.o htc_awb_cal.o
+obj-$(CONFIG_ARCH_MSM8X60) += devices_htc.o htc_wifi_nvs.o emmc_partitions.o htc_awb_cal.o
 
 ifeq ($(CONFIG_ARCH_MSM8X60_LTE),y)
 obj-$(CONFIG_ARCH_MSM8X60_LTE) += 8x60-lte/

@@ -345,23 +345,11 @@ int smd_diag(void)
 {
 	char *x;
 	int size;
-	int ret = 0;
 
 	x = smem_find(ID_DIAG_ERR_MSG, SZ_DIAG_ERR_MSG);
 	if (x != 0) {
 		x[SZ_DIAG_ERR_MSG - 1] = 0;
 		SMD_INFO("smem: DIAG '%s'\n", x);
-	}
-
-	if (x && !strlen(x))
-		strcpy(x, "Radio Fatal");
-
-	/* If err msg exists, set as ramdump reason. */
-	if (x && strlen(x)) {
-#ifdef CONFIG_MSM_NATIVE_RESTART
-		set_ramdump_reason(x);
-#endif
-		ret = 1;
 	}
 
 	x = smem_get_entry(SMEM_ERR_CRASH_LOG, &size);
@@ -370,7 +358,7 @@ int smd_diag(void)
 		pr_err("[SMD] smem: CRASH LOG\n'%s'\n", x);
 	}
 
-	return ret;
+	return 0;
 }
 
 
@@ -2104,15 +2092,7 @@ static irqreturn_t smsm_irq_handler(int irq, void *data)
 
 			/* queue modem restart notify chain */
 			modem_queue_start_reset_notify();
-#ifdef CONFIG_MSM_NATIVE_RESTART
-		} else if (modm & SMSM_CACHE_FLUSH_DONE) {	/* Modified by HTC */
-			/* This bit will be set while reseting due to oem-99 or kernel panic.
-			 * The other bits will not be cleared.
-			 * As a result, this condition must at the first.
-			 */
-			pr_err("[SMD] SMSM: Modem SMSM state changed to SMSM_CACHE_FLUSH_DONE.\n");
-			notify_modem_cache_flush_done();
-#endif
+
 		} else if (modm & SMSM_RESET) {	/* Modified by HTC */
 			if (!cpu_is_msm8960() && !cpu_is_msm8930()) {
 				apps |= SMSM_RESET;

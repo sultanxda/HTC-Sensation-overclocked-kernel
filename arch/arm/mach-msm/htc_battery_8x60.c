@@ -847,6 +847,9 @@ static int htc_battery_prepare(struct device *dev)
 	ktime_t interval;
 	ktime_t slack = ktime_set(0, 0);
 	ktime_t next_alarm;
+	struct timespec xtime;
+
+	xtime = CURRENT_TIME;
 
 	htc_batt_timer.total_time_ms += (jiffies -
 			htc_batt_timer.batt_system_jiffies) * MSEC_PER_SEC / HZ;
@@ -904,7 +907,9 @@ static void htc_battery_complete(struct device *dev)
 {
 	unsigned long resume_ms;
 	unsigned long check_time;
+	struct timespec xtime;
 
+	xtime = CURRENT_TIME;
 	resume_ms = xtime.tv_sec * MSEC_PER_SEC + xtime.tv_nsec / NSEC_PER_MSEC;
 	htc_batt_timer.total_time_ms += resume_ms -
 					htc_batt_timer.batt_suspend_ms;

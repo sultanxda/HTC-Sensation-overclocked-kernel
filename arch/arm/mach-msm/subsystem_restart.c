@@ -34,8 +34,6 @@
 
 #include "smd_private.h"
 
-#include <mach/restart.h>
-
 struct subsys_soc_restart_order {
 	const char * const *subsystem_list;
 	int count;
@@ -361,7 +359,7 @@ static int subsystem_restart_thread(void *data)
 	mutex_lock(&soc_order_reg_lock);
 
 	pr_debug("[%p]: Starting restart sequence for %s\n", current,
-		r_work->subsys->name);
+			r_work->subsys->name);
 
 	_send_notification_to_order(restart_list,
 				restart_list_count,
@@ -412,7 +410,7 @@ static int subsystem_restart_thread(void *data)
 			continue;
 
 		pr_info("[%p]: Powering up %s\n", current,
-			restart_list[i]->name);
+					restart_list[i]->name);
 
 		if (restart_list[i]->powerup(subsys) < 0)
 			panic("%s[%p]: Failed to powerup %s!", __func__,
@@ -441,15 +439,14 @@ int subsystem_restart(const char *subsys_name)
 	struct subsys_data *subsys;
 	struct task_struct *tsk;
 	struct restart_thread_data *data = NULL;
-	char restart_reason[256];
 
 	if (!subsys_name) {
 		pr_err("Invalid subsystem name.\n");
 		return -EINVAL;
 	}
 
-	pr_info("Restart sequence requested for %s\n",
-		subsys_name);
+	pr_info("Restart sequence requested for %s, restart_level = %d.\n",
+		subsys_name, restart_level);
 
 	/* List of subsystems is protected by a lock. New subsystems can
 	 * still come in.
@@ -500,20 +497,8 @@ int subsystem_restart(const char *subsys_name)
 		break;
 
 	case RESET_SOC:
-		sprintf(restart_reason, "%s fatal", subsys_name);
-
-		/* Only print "<subsystem name> fatal" when there is no
-		 * err msg in shared memory OR fatal is not caused modem.
-		 * Need to review whether it is possible for err msg to
-		 * appear in shared memory when fatal is NOT caused by
-		 * modem (will other subsystem write err msg too?), but
-		 * for now, only allow modem to print its own err msg.
-		 */
-		if (!smd_diag() || strncmp(subsys_name, "modem",
-				SUBSYS_NAME_MAX_LENGTH))
-			set_ramdump_reason(restart_reason);
-
-		arm_pm_restart(RESTART_MODE_MODEM_CRASH, "force-hard");
+		panic("subsys-restart: Resetting the SoC - %s crashed.",
+			subsys->name);
 		break;
 
 	default:

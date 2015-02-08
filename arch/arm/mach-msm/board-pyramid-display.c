@@ -1175,7 +1175,7 @@ int mipi_dsi_panel_power(const int on)
 					" l1_3v\n", __func__);
 			return -ENODEV;
 		}
-		hr_msleep(5);
+		msleep(5);
 
 		if (system_rev >= 1) {
 			if (regulator_enable(l4_1v8)) {
@@ -1192,17 +1192,17 @@ int mipi_dsi_panel_power(const int on)
 		}
 
 		if (!first_init) {
-			hr_msleep(10);
+			msleep(10);
 			gpio_set_value(GPIO_LCM_RST_N, 1);
-			hr_msleep(1);
+			msleep(1);
 			gpio_set_value(GPIO_LCM_RST_N, 0);
-			hr_msleep(1);
+			msleep(1);
 			gpio_set_value(GPIO_LCM_RST_N, 1);
-			hr_msleep(20);
+			msleep(20);
 		}
 	} else {
 		gpio_set_value(GPIO_LCM_RST_N, 0);
-		hr_msleep(5);
+		msleep(5);
 		if (system_rev >= 1) {
 			if (regulator_disable(l4_1v8)) {
 				PR_DISP_ERR("%s: Unable to enable the regulator:"
@@ -1216,7 +1216,7 @@ int mipi_dsi_panel_power(const int on)
 				return -ENODEV;
 			}
 		}
-		hr_msleep(5);
+		msleep(5);
 		if (regulator_disable(l1_3v)) {
 			PR_DISP_ERR("%s: Unable to enable the regulator:"
 					" l1_3v\n", __func__);

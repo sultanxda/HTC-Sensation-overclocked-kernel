@@ -21,9 +21,7 @@
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <linux/syscalls.h>
-#include <mach/board.h>
 
-#define KEYRESET_DELAY 3*HZ
 
 struct keyreset_state {
 	struct input_handler input_handler;
@@ -35,27 +33,18 @@ struct keyreset_state {
 	int key_down;
 	int key_up;
 	int restart_disabled;
+	int (*reset_fn)(void);
 };
 
-static int restart_requested;
+int restart_requested;
 static void deferred_restart(struct work_struct *dummy)
 {
-	pr_info("keyreset::%s in\n", __func__);
-#ifdef CONFIG_MSM_WATCHDOG
-		msm_watchdog_suspend(NULL);
-#endif
-		/* show blocked processes to debug hang problems */
-		printk(KERN_INFO "\n### Show Blocked State ###\n");
-		show_state_filter(TASK_UNINTERRUPTIBLE);
-#ifdef CONFIG_MSM_WATCHDOG
-		msm_watchdog_resume(NULL);
-#endif
 	restart_requested = 2;
 	sys_sync();
 	restart_requested = 3;
 	kernel_restart(NULL);
 }
-static DECLARE_DELAYED_WORK(restart_work, deferred_restart);
+static DECLARE_WORK(restart_work, deferred_restart);
 
 static void keyreset_event(struct input_handle *handle, unsigned int type,
 			   unsigned int code, int value)
@@ -96,20 +85,16 @@ static void keyreset_event(struct input_handle *handle, unsigned int type,
 
 	if (value && !state->restart_disabled &&
 	    state->key_down == state->key_down_target) {
-
 		state->restart_disabled = 1;
 		if (restart_requested)
 			panic("keyboard reset failed, %d", restart_requested);
-		pr_info("keyboard reset\n");
-		schedule_delayed_work(&restart_work, KEYRESET_DELAY);
-		restart_requested = 1;
-
-	} else if (restart_requested == 1) {
-		if (cancel_delayed_work(&restart_work)) {
-			pr_info("%s: cancel restart work\n", __func__);
-			restart_requested = 0;
-		} else
-			pr_info("%s: cancel failed\n", __func__);
+		if (state->reset_fn) {
+			restart_requested = state->reset_fn();
+		} else {
+			pr_info("keyboard reset\n");
+			schedule_work(&restart_work);
+			restart_requested = 1;
+		}
 	}
 done:
 	spin_unlock_irqrestore(&state->lock, flags);
@@ -183,11 +168,6 @@ static int keyreset_probe(struct platform_device *pdev)
 	struct keyreset_state *state;
 	struct keyreset_platform_data *pdata = pdev->dev.platform_data;
 
-	if (!board_build_flag()) {
-		printk(KERN_INFO "[KEY] Ship code, disable key reset.\n");
-		return -EINVAL;
-	}
-
 	if (!pdata)
 		return -EINVAL;
 
@@ -212,6 +192,10 @@ static int keyreset_probe(struct platform_device *pdev)
 			__set_bit(key, state->upbit);
 		}
 	}
+
+	if (pdata->reset_fn)
+		state->reset_fn = pdata->reset_fn;
+
 	state->input_handler.event = keyreset_event;
 	state->input_handler.connect = keyreset_connect;
 	state->input_handler.disconnect = keyreset_disconnect;
