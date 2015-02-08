@@ -1,7 +1,7 @@
 /* linux/arch/arm/mach-msm/dma.c
  *
  * Copyright (C) 2007 Google, Inc.
- * Copyright (c) 2008-2010, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2008-2010, 2012 The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -286,9 +286,11 @@ void msm_dmov_enqueue_cmd_ext(unsigned id, struct msm_dmov_cmd *cmd)
 	int ch = DMOV_ID_TO_CHAN(id);
 
 	spin_lock_irqsave(&dmov_conf[adm].lock, irq_flags);
-	if (dmov_conf[adm].clk_ctl == CLK_DIS)
-		msm_dmov_clk_toggle(adm, 1);
-	else if (dmov_conf[adm].clk_ctl == CLK_TO_BE_DIS)
+	if (dmov_conf[adm].clk_ctl == CLK_DIS) {
+		status = msm_dmov_clk_toggle(adm, 1);
+		if (status != 0)
+			goto error;
+	} else if (dmov_conf[adm].clk_ctl == CLK_TO_BE_DIS)
 		del_timer(&dmov_conf[adm].timer);
 	dmov_conf[adm].clk_ctl = CLK_EN;
 
@@ -307,7 +309,7 @@ void msm_dmov_enqueue_cmd_ext(unsigned id, struct msm_dmov_cmd *cmd)
 	} else {
 		if (!dmov_conf[adm].channel_active) {
 			dmov_conf[adm].clk_ctl = CLK_TO_BE_DIS;
-			mod_timer(&dmov_conf[adm].timer, jiffies + (HZ/10));
+			mod_timer(&dmov_conf[adm].timer, jiffies + HZ);
 		}
 		if (list_empty(&dmov_conf[adm].active_commands[ch]))
 			PRINT_ERROR("msm_dmov_enqueue_cmd_ext(%d), stalled, "
@@ -316,6 +318,7 @@ void msm_dmov_enqueue_cmd_ext(unsigned id, struct msm_dmov_cmd *cmd)
 		    "%x\n", id, status);
 		list_add_tail(&cmd->list, &dmov_conf[adm].ready_commands[ch]);
 	}
+error:
 	spin_unlock_irqrestore(&dmov_conf[adm].lock, irq_flags);
 }
 EXPORT_SYMBOL(msm_dmov_enqueue_cmd_ext);
@@ -512,7 +515,7 @@ static irqreturn_t msm_datamover_irq_handler(int irq, void *dev_id)
 	if (!dmov_conf[adm].channel_active && valid) {
 		disable_irq_nosync(dmov_conf[adm].irq);
 		dmov_conf[adm].clk_ctl = CLK_TO_BE_DIS;
-		mod_timer(&dmov_conf[adm].timer, jiffies + (HZ/10));
+		mod_timer(&dmov_conf[adm].timer, jiffies + HZ);
 	}
 
 	spin_unlock_irqrestore(&dmov_conf[adm].lock, irq_flags);
@@ -563,6 +566,7 @@ static struct dev_pm_ops msm_dmov_dev_pm_ops = {
 static int msm_dmov_init_clocks(struct platform_device *pdev)
 {
 	int adm = (pdev->id >= 0) ? pdev->id : 0;
+	int ret;
 
 	dmov_conf[adm].clk = clk_get(&pdev->dev, "core_clk");
 	if (IS_ERR(dmov_conf[adm].clk)) {
@@ -571,7 +575,6 @@ static int msm_dmov_init_clocks(struct platform_device *pdev)
 		return -ENOENT;
 	}
 
-#ifndef CONFIG_ARCH_MSM7X30
 	dmov_conf[adm].pclk = clk_get(&pdev->dev, "iface_clk");
 	if (IS_ERR(dmov_conf[adm].pclk)) {
 		dmov_conf[adm].pclk = NULL;
@@ -583,10 +586,10 @@ static int msm_dmov_init_clocks(struct platform_device *pdev)
 		dmov_conf[adm].ebiclk = NULL;
 		/* ebiclk not present on all SoCs, don't bail on failure */
 	} else {
-		if (clk_set_rate(dmov_conf[adm].ebiclk, 27000000))
+		ret = clk_set_rate(dmov_conf[adm].ebiclk, 27000000);
+		if (ret)
 			return -ENOENT;
 	}
-#endif
 
 	return 0;
 }
@@ -617,16 +620,15 @@ static void config_datamover(int adm)
 	}
 #endif
 }
+
 static int msm_dmov_probe(struct platform_device *pdev)
 {
 	int adm = (pdev->id >= 0) ? pdev->id : 0;
 	int i;
 	int ret;
-
+	struct msm_dmov_pdata *pdata = pdev->dev.platform_data;
 	struct resource *irqres =
 		platform_get_resource(pdev, IORESOURCE_IRQ, 0);
-#if !defined(CONFIG_ARCH_MSM7X27)
-	struct msm_dmov_pdata *pdata = pdev->dev.platform_data;
 	struct resource *mres =
 		platform_get_resource(pdev, IORESOURCE_MEM, 0);
 
@@ -636,20 +638,14 @@ static int msm_dmov_probe(struct platform_device *pdev)
 	}
 	if (!dmov_conf[adm].sd_size)
 		return -ENXIO;
-#endif/*#if !defined(CONFIG_ARCH_MSM7X27)*/
+
 	if (!irqres || !irqres->start)
 		return -ENXIO;
 	dmov_conf[adm].irq = irqres->start;
-	/*Bugfix:the dmov base addr store in platform elememt .end
-	 * .start just a irq number*/
-#if !defined(CONFIG_ARCH_MSM7X27)
+
 	if (!mres || !mres->start)
 		return -ENXIO;
 	dmov_conf[adm].base = ioremap_nocache(mres->start, resource_size(mres));
-#else
-	dmov_conf[adm].base = (void *) irqres->end;
-#endif/*#if !defined(CONFIG_ARCH_MSM7X27)*/
-
 	if (!dmov_conf[adm].base)
 		return -ENOMEM;
 
