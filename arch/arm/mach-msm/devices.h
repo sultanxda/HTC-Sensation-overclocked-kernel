@@ -48,23 +48,18 @@ extern struct platform_device msm_device_uart3;
 extern struct platform_device msm_device_uart_dm1;
 extern struct platform_device msm_device_uart_dm2;
 extern struct platform_device msm_device_uart_dm3;
-extern struct platform_device msm_device_uart_dm11;
 extern struct platform_device msm_device_uart_dm12;
 extern struct platform_device *msm_device_uart_gsbi9;
 extern struct platform_device msm_device_uart_dm6;
 
 extern struct platform_device msm8960_device_uart_gsbi2;
 extern struct platform_device msm8960_device_uart_gsbi5;
-extern struct platform_device msm8960_device_uart_gsbi8;
-extern struct platform_device msm8960_device_ssbi_pm8921;
-extern struct platform_device msm8960_device_qup_i2c_gsbi2;
+extern struct platform_device msm8960_device_ssbi_pmic;
 extern struct platform_device msm8960_device_qup_i2c_gsbi3;
 extern struct platform_device msm8960_device_qup_i2c_gsbi4;
-extern struct platform_device msm8960_device_qup_i2c_gsbi5;
-extern struct platform_device msm8960_device_qup_i2c_gsbi8;
+extern struct platform_device msm8960_device_qup_i2c_gsbi10;
 extern struct platform_device msm8960_device_qup_i2c_gsbi12;
 extern struct platform_device msm8960_device_qup_spi_gsbi1;
-extern struct platform_device msm8960_device_qup_spi_gsbi10;
 extern struct platform_device msm8960_gemini_device;
 extern struct platform_device msm8960_device_csiphy0;
 extern struct platform_device msm8960_device_csiphy1;
@@ -120,7 +115,6 @@ extern struct platform_device qup_device_i2c;
 
 extern struct platform_device msm_gsbi0_qup_i2c_device;
 extern struct platform_device msm_gsbi1_qup_i2c_device;
-extern struct platform_device msm_gsbi2_qup_i2c_device;
 extern struct platform_device msm_gsbi3_qup_i2c_device;
 extern struct platform_device msm_gsbi4_qup_i2c_device;
 extern struct platform_device msm_gsbi5_qup_i2c_device;
@@ -163,11 +157,6 @@ extern struct platform_device msm_device_ssbi2;
 extern struct platform_device msm_device_ssbi3;
 extern struct platform_device msm_device_ssbi6;
 extern struct platform_device msm_device_ssbi7;
-
-#ifdef CONFIG_MSM_SSBI
-extern struct platform_device msm_device_pm8058;
-extern struct platform_device msm_device_pm8901;
-#endif
 
 extern struct platform_device msm_gsbi1_qup_spi_device;
 
@@ -258,10 +247,8 @@ void __init msm_fb_register_device(char *name, void *data);
 void __init msm_camera_register_device(void *, uint32_t, void *);
 struct platform_device *msm_add_gsbi9_uart(void);
 extern struct platform_device msm_device_touchscreen;
-extern unsigned engineer_id;
 extern int ps_type;
 
-extern struct pil_device peripheral_dsps;
 extern struct platform_device led_pdev;
 
 extern struct platform_device msm_rpm_device;

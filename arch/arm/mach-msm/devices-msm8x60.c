@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,9 +29,6 @@
 #include "clock-voter.h"
 #include "devices.h"
 #include "devices-msm8x60.h"
-#include <linux/mfd/pmic8058.h>
-#include <linux/pmic8058-xoadc.h>
-#include <linux/msm_adc.h>
 #include <linux/dma-mapping.h>
 #include <linux/irq.h>
 #include <linux/clk.h>
@@ -52,7 +49,6 @@
 #include <linux/android_pmem.h>
 #include <linux/gpio.h>
 #include <linux/delay.h>
-#include <linux/io.h>
 #include <mach/mdm.h>
 #include <mach/rpm.h>
 #include <mach/board.h>
@@ -98,15 +94,76 @@
 #define INT_UART3DM_IRQ     GSBI3_UARTDM_IRQ
 #define TCSR_BASE_PHYS      0x16b00000
 
-#define MSM_UART11DM_PHYS    (MSM_GSBI11_PHYS + 0x40000)
-#define INT_UART11DM_IRQ     GSBI11_UARTDM_IRQ
-
 /* PRNG device */
 #define MSM_PRNG_PHYS		0x16C00000
 #define MSM_UART9DM_PHYS    (MSM_GSBI9_PHYS + 0x40000)
 #define INT_UART9DM_IRQ     GSBI9_UARTDM_IRQ
 
 struct platform_device msm_camera_sensor_webcam;
+
+static void charm_ap2mdm_kpdpwr_on(void)
+{
+	gpio_direction_output(AP2MDM_PMIC_RESET_N, 0);
+	gpio_direction_output(AP2MDM_KPDPWR_N, 1);
+}
+
+static void charm_ap2mdm_kpdpwr_off(void)
+{
+	int i;
+
+	gpio_direction_output(AP2MDM_ERRFATAL, 1);
+
+	for (i = 20; i > 0; i--) {
+		if (gpio_get_value(MDM2AP_STATUS) == 0)
+			break;
+		msleep(100);
+	}
+	gpio_direction_output(AP2MDM_ERRFATAL, 0);
+
+	if (i == 0) {
+		pr_err("%s: MDM2AP_STATUS never went low. Doing a hard reset \
+			of the charm modem.\n", __func__);
+		gpio_direction_output(AP2MDM_PMIC_RESET_N, 1);
+		/*
+		* Currently, there is a debounce timer on the charm PMIC. It is
+		* necessary to hold the AP2MDM_PMIC_RESET low for ~3.5 seconds
+		* for the reset to fully take place. Sleep here to ensure the
+		* reset has occured before the function exits.
+		*/
+		msleep(4000);
+		gpio_direction_output(AP2MDM_PMIC_RESET_N, 0);
+	}
+}
+
+static struct resource charm_resources[] = {
+	/* MDM2AP_ERRFATAL */
+	{
+		.start	= MSM_GPIO_TO_INT(MDM2AP_ERRFATAL),
+		.end	= MSM_GPIO_TO_INT(MDM2AP_ERRFATAL),
+		.flags = IORESOURCE_IRQ,
+	},
+	/* MDM2AP_STATUS */
+	{
+		.start	= MSM_GPIO_TO_INT(MDM2AP_STATUS),
+		.end	= MSM_GPIO_TO_INT(MDM2AP_STATUS),
+		.flags = IORESOURCE_IRQ,
+	}
+};
+
+static struct charm_platform_data mdm_platform_data = {
+	.charm_modem_on		= charm_ap2mdm_kpdpwr_on,
+	.charm_modem_off	= charm_ap2mdm_kpdpwr_off,
+};
+
+struct platform_device msm_charm_modem = {
+	.name		= "charm_modem",
+	.id		= -1,
+	.num_resources	= ARRAY_SIZE(charm_resources),
+	.resource	= charm_resources,
+	.dev		= {
+		.platform_data = &mdm_platform_data,
+	},
+};
 
 #ifdef CONFIG_MSM_DSPS
 #define GSBI12_DEV (&msm_dsps_device.dev)
@@ -234,34 +291,6 @@ struct platform_device msm_device_uart_dm3 = {
 	.resource = msm_uart3_dm_resources,
 };
 
-static struct resource msm_uart11_dm_resources[] = {
-	{
-		.start = MSM_UART11DM_PHYS,
-		.end   = MSM_UART11DM_PHYS + PAGE_SIZE - 1,
-		.name  = "uartdm_resource",
-		.flags = IORESOURCE_MEM,
-	},
-	{
-		.start = INT_UART11DM_IRQ,
-		.end   = INT_UART11DM_IRQ,
-		.flags = IORESOURCE_IRQ,
-	},
-	{
-		/* GSBI 11 is UART_GSBI11 */
-		.start = MSM_GSBI11_PHYS,
-		.end   = MSM_GSBI11_PHYS + PAGE_SIZE - 1,
-		.name  = "gsbi_resource",
-		.flags = IORESOURCE_MEM,
-	},
-};
-
-struct platform_device msm_device_uart_dm11 = {
-	.name = "msm_serial_hsl",
-	.id = 3,
-	.num_resources = ARRAY_SIZE(msm_uart11_dm_resources),
-	.resource = msm_uart11_dm_resources,
-};
-
 static struct resource msm_uart12_dm_resources[] = {
 	{
 		.start = MSM_UART2DM_PHYS,
@@ -328,71 +357,6 @@ struct platform_device *msm_add_gsbi9_uart(void)
 }
 #endif
 
-static struct resource gsbi2_qup_spi_resources[] = {
-	{
-		.name   = "spi_base",
-		.start  = MSM_GSBI2_QUP_PHYS,
-		.end    = MSM_GSBI2_QUP_PHYS + SZ_4K - 1,
-		.flags  = IORESOURCE_MEM,
-	},
-	{
-		.name   = "gsbi_base",
-		.start  = MSM_GSBI2_PHYS,
-		.end    = MSM_GSBI2_PHYS + 4 - 1,
-		.flags  = IORESOURCE_MEM,
-	},
-	{
-		.name   = "spi_irq_in",
-		.start  = GSBI2_QUP_IRQ,
-		.end    = GSBI2_QUP_IRQ,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spidm_channels",
-		.start  = 5,
-		.end    = 6,
-		.flags  = IORESOURCE_DMA,
-	},
-	{
-		.name   = "spidm_crci",
-		.start  = 8,
-		.end    = 7,
-		.flags  = IORESOURCE_DMA,
-	},
-	{
-		.name   = "spi_clk",
-		.start  = 40,
-		.end    = 40,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_cs",
-		.start  = 39,
-		.end    = 39,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_miso",
-		.start  = 38,
-		.end    = 38,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_mosi",
-		.start  = 37,
-		.end    = 37,
-		.flags  = IORESOURCE_IO,
-	},
-};
-
-/* Use GSBI2 QUP for SPI-1 */
-struct platform_device msm_gsbi2_qup_spi_device = {
-	.name       = "spi_qsd",
-	.id     = 1,
-	.num_resources  = ARRAY_SIZE(gsbi2_qup_spi_resources),
-	.resource   = gsbi2_qup_spi_resources,
-};
-
 static struct resource gsbi3_qup_i2c_resources[] = {
 	{
 		.name	= "qup_phys_addr",
@@ -426,113 +390,6 @@ static struct resource gsbi3_qup_i2c_resources[] = {
 	},
 };
 
-static struct resource gsbi3_qup_spi_resources[] = {
-	{
-		.name   = "spi_base",
-		.start  = MSM_GSBI3_QUP_PHYS,
-		.end    = MSM_GSBI3_QUP_PHYS + SZ_4K - 1,
-		.flags  = IORESOURCE_MEM,
-	},
-	{
-		.name   = "gsbi_base",
-		.start  = MSM_GSBI3_PHYS,
-		.end    = MSM_GSBI3_PHYS + 4 - 1,
-		.flags  = IORESOURCE_MEM,
-	},
-	{
-		.name   = "spi_irq_in",
-		.start  = GSBI3_QUP_IRQ,
-		.end    = GSBI3_QUP_IRQ,
-		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spidm_channels",
-		.start  = 5,
-		.end    = 6,
-		.flags  = IORESOURCE_DMA,
-	},
-	{
-		.name   = "spidm_crci",
-		.start  = 8,
-		.end    = 7,
-		.flags  = IORESOURCE_DMA,
-	},
-	{
-		.name   = "spi_clk",
-		.start  = 44,
-		.end    = 44,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_cs2",
-		.start  = 43,
-		.end    = 43,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_miso",
-		.start  = 42,
-		.end    = 42,
-		.flags  = IORESOURCE_IO,
-	},
-	{
-		.name   = "spi_mosi",
-		.start  = 41,
-		.end    = 41,
-		.flags  = IORESOURCE_IO,
-	},
-};
-
-/* Use GSBI3 QUP for SPI-2 */
-struct platform_device msm_gsbi3_qup_spi_device = {
-	.name           = "spi_qsd",
-	.id             = 2,
-	.num_resources  = ARRAY_SIZE(gsbi3_qup_spi_resources),
-	.resource       = gsbi3_qup_spi_resources,
-};
-
-static struct resource gsbi8_qup_spi_resources[] = {
-	{
-		.name	= "spi_base",
-		.start	= MSM_GSBI8_QUP_PHYS,
-		.end	= MSM_GSBI8_QUP_PHYS + SZ_4K - 1,
-		.flags	= IORESOURCE_MEM,
-	},
-	{
-		.name	= "gsbi_base",
-		.start	= MSM_GSBI8_PHYS,
-		.end	= MSM_GSBI8_PHYS + 4 - 1,
-		.flags	= IORESOURCE_MEM,
-	},
-	{
-		.name	= "spi_irq_in",
-		.start	= GSBI8_QUP_IRQ,
-		.end	= GSBI8_QUP_IRQ,
-		.flags	= IORESOURCE_IRQ,
-	},
-	{
-		.name   = "spidm_channels",
-		.start  = 5,
-		.end    = 6,
-		.flags  = IORESOURCE_DMA,
-	},
-	{
-		.name   = "spidm_crci",
-		.start  = 8,
-		.end    = 7,
-		.flags  = IORESOURCE_DMA,
-	},
-};
-
-/* Use GSBI8 QUP for SPI-3 */
-struct platform_device msm_gsbi8_qup_spi_device = {
-	.name		= "spi_qsd",
-	.id		= 3,
-	.num_resources	= ARRAY_SIZE(gsbi8_qup_spi_resources),
-	.resource	= gsbi8_qup_spi_resources,
-};
-
-
 static struct resource gsbi4_qup_i2c_resources[] = {
 	{
 		.name	= "qup_phys_addr",
@@ -551,18 +408,6 @@ static struct resource gsbi4_qup_i2c_resources[] = {
 		.start	= GSBI4_QUP_IRQ,
 		.end	= GSBI4_QUP_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
-		.name	= "i2c_clk",
-		.start	= 48,
-		.end	= 48,
-		.flags	= IORESOURCE_IO,
-	},
-	{
-		.name	= "i2c_sda",
-		.start	= 47,
-		.end	= 47,
-		.flags	= IORESOURCE_IO,
 	},
 };
 
@@ -584,18 +429,6 @@ static struct resource gsbi5_qup_i2c_resources[] = {
 		.start  = GSBI5_QUP_IRQ,
 		.end    = GSBI5_QUP_IRQ,
 		.flags  = IORESOURCE_IRQ,
-	},
-	{
-		.name	= "i2c_clk",
-		.start	= 52,
-		.end	= 52,
-		.flags	= IORESOURCE_IO,
-	},
-	{
-		.name	= "i2c_sda",
-		.start	= 51,
-		.end	= 51,
-		.flags	= IORESOURCE_IO,
 	},
 };
 
@@ -651,18 +484,6 @@ static struct resource gsbi8_qup_i2c_resources[] = {
 		.end	= GSBI8_QUP_IRQ,
 		.flags	= IORESOURCE_IRQ,
 	},
-	{
-		.name	= "i2c_clk",
-		.start	= 65,
-		.end	= 65,
-		.flags	= IORESOURCE_IO,
-	},
-	{
-		.name	= "i2c_sda",
-		.start	= 64,
-		.end	= 64,
-		.flags	= IORESOURCE_IO,
-	},
 };
 
 static struct resource gsbi9_qup_i2c_resources[] = {
@@ -705,20 +526,7 @@ static struct resource gsbi10_qup_i2c_resources[] = {
 		.end	= GSBI10_QUP_IRQ,
 		.flags	= IORESOURCE_IRQ,
 	},
-	{
-		.name	= "i2c_clk",
-		.start	= 73,
-		.end	= 73,
-		.flags	= IORESOURCE_IO,
-	},
-	{
-		.name	= "i2c_sda",
-		.start	= 72,
-		.end	= 72,
-		.flags	= IORESOURCE_IO,
-	},
 };
-
 
 static struct resource gsbi12_qup_i2c_resources[] = {
 	{
@@ -738,18 +546,6 @@ static struct resource gsbi12_qup_i2c_resources[] = {
 		.start	= GSBI12_QUP_IRQ,
 		.end	= GSBI12_QUP_IRQ,
 		.flags	= IORESOURCE_IRQ,
-	},
-	{
-		.name	= "i2c_clk",
-		.start	= 115,
-		.end	= 115,
-		.flags	= IORESOURCE_IO,
-	},
-	{
-		.name	= "i2c_sda",
-		.start	= 116,
-		.end	= 116,
-		.flags	= IORESOURCE_IO,
 	},
 };
 
@@ -1177,9 +973,9 @@ static struct resource resources_ssbi_pmic2_resource[] = {
 };
 
 struct platform_device msm_device_ssbi_pmic2 = {
-	.name           = "msm_ssbi",
-	.id             = 1,
-	.resource       = resources_ssbi_pmic2_resource,
+	.name		= "msm_ssbi",
+	.id		= 1,
+	.resource	= resources_ssbi_pmic2_resource,
 	.num_resources	= ARRAY_SIZE(resources_ssbi_pmic2_resource),
 };
 #endif
@@ -1221,18 +1017,6 @@ struct platform_device msm_device_ssbi3 = {
 	.resource	= msm_ssbi3_resources,
 };
 #endif /* CONFIG_I2C_SSBI */
-
-#ifdef CONFIG_MSM_SSBI
-struct platform_device msm_device_pm8058 = {
-	.name	= "pm8058-core",
-	.id		= 0,
-};
-
-struct platform_device msm_device_pm8901 = {
-	.name	= "pm8901-core",
-	.id		= 1,
-};
-#endif
 
 static struct resource gsbi1_qup_spi_resources[] = {
 	{
@@ -1299,6 +1083,53 @@ struct platform_device msm_gsbi1_qup_spi_device = {
 	.resource	= gsbi1_qup_spi_resources,
 };
 
+
+static struct resource gsbi10_qup_spi_resources[] = {
+	{
+		.name	= "spi_base",
+		.start	= MSM_GSBI10_QUP_PHYS,
+		.end	= MSM_GSBI10_QUP_PHYS + SZ_4K - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "gsbi_base",
+		.start	= MSM_GSBI10_PHYS,
+		.end	= MSM_GSBI10_PHYS + 4 - 1,
+		.flags	= IORESOURCE_MEM,
+	},
+	{
+		.name	= "spi_irq_in",
+		.start	= GSBI10_QUP_IRQ,
+		.end	= GSBI10_QUP_IRQ,
+		.flags	= IORESOURCE_IRQ,
+	},
+	{
+		.name   = "spi_clk",
+		.start  = 73,
+		.end    = 73,
+		.flags  = IORESOURCE_IO,
+	},
+	{
+		.name   = "spi_cs",
+		.start  = 72,
+		.end    = 72,
+		.flags  = IORESOURCE_IO,
+	},
+	{
+		.name   = "spi_mosi",
+		.start  = 70,
+		.end    = 70,
+		.flags  = IORESOURCE_IO,
+	},
+};
+
+/* Use GSBI10 QUP for SPI-1 */
+struct platform_device msm_gsbi10_qup_spi_device = {
+	.name		= "spi_qsd",
+	.id		= 1,
+	.num_resources	= ARRAY_SIZE(gsbi10_qup_spi_resources),
+	.resource	= gsbi10_qup_spi_resources,
+};
 #define MSM_SDC1_BASE         0x12400000
 #define MSM_SDC1_DML_BASE     (MSM_SDC1_BASE + 0x800)
 #define MSM_SDC1_BAM_BASE     (MSM_SDC1_BASE + 0x2000)
@@ -1703,7 +1534,9 @@ struct platform_device msm_device_vpe = {
 	.resource       = msm_vpe_resources,
 	.num_resources  = ARRAY_SIZE(msm_vpe_resources),
 };
+
 #endif
+
 
 #define MIPI_DSI_HW_BASE	0x04700000
 #define ROTATOR_HW_BASE		0x04E00000
@@ -2278,8 +2111,8 @@ struct platform_device msm_device_smd = {
 };
 
 static struct msm_watchdog_pdata msm_watchdog_pdata = {
-	.pet_time = 20000,
-	.bark_time = 21000,
+	.pet_time = 10000,
+	.bark_time = 11000,
 	.has_secure = true,
 };
 
@@ -2866,18 +2699,22 @@ struct platform_device asoc_mvs_dai1 = {
 };
 #endif
 
-struct platform_device *msm_footswitch_devices[] = {
-	FS_8X60(FS_IJPEG,	"fs_ijpeg"),
-	FS_8X60(FS_MDP,	"fs_mdp"),
-	FS_8X60(FS_ROT,	"fs_rot"),
-	FS_8X60(FS_VED,	"fs_ved"),
-	FS_8X60(FS_VFE,	"fs_vfe"),
-	FS_8X60(FS_VPE,	"fs_vpe"),
-	FS_8X60(FS_GFX3D,	"fs_gfx3d"),
-	FS_8X60(FS_GFX2D0,	"fs_gfx2d0"),
-	FS_8X60(FS_GFX2D1,	"fs_gfx2d1"),
+struct flash_platform_data msm_nand_data = {
+	.parts          = NULL,
+	.nr_parts       = 0,
 };
 
+struct platform_device *msm_footswitch_devices[] = {
+	FS_8X60(FS_IJPEG,  "fs_ijpeg"),
+	FS_8X60(FS_MDP,    "fs_mdp"),
+	FS_8X60(FS_ROT,    "fs_rot"),
+	FS_8X60(FS_VED,    "fs_ved"),
+	FS_8X60(FS_VFE,    "fs_vfe"),
+	FS_8X60(FS_VPE,    "fs_vpe"),
+	FS_8X60(FS_GFX3D,  "fs_gfx3d"),
+	FS_8X60(FS_GFX2D0, "fs_gfx2d0"),
+	FS_8X60(FS_GFX2D1, "fs_gfx2d1"),
+};
 unsigned msm_num_footswitch_devices = ARRAY_SIZE(msm_footswitch_devices);
 
 #ifdef CONFIG_MSM_RPM
@@ -2979,9 +2816,5 @@ struct platform_device msm_rpm_device = {
 	.name = "msm_rpm",
 	.id = -1,
 };
-#endif
 
-struct flash_platform_data msm_nand_data = {
-	.parts          = NULL,
-	.nr_parts       = 0,
-};
+#endif
