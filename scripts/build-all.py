@@ -9,7 +9,7 @@
 #     * Redistributions in binary form must reproduce the above copyright
 #       notice, this list of conditions and the following disclaimer in the
 #       documentation and/or other materials provided with the distribution.
-#     * Neither the name of Code Aurora nor
+#     * Neither the name of The Linux Foundation nor
 #       the names of its contributors may be used to endorse or promote
 #       products derived from this software without specific prior written
 #       permission.
@@ -83,7 +83,7 @@ def update_config(file, str):
 def scan_configs():
     """Get the full list of defconfigs appropriate for this tree."""
     names = {}
-    for n in glob.glob('arch/arm/configs/[fm]sm[0-9]*_defconfig'):
+    for n in glob.glob('arch/arm/configs/[fm]sm[0-9-]*_defconfig'):
         names[os.path.basename(n)[:-10]] = n
     for n in glob.glob('arch/arm/configs/qsd*_defconfig'):
         names[os.path.basename(n)[:-10]] = n

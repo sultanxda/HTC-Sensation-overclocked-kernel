@@ -1094,13 +1094,12 @@ static void msm_hsusb_vbus_power(struct msm_otg *motg, bool on)
 	if (motg->pdata->vbus_power)
 		motg->pdata->vbus_power(on);
 
-	if (on) {
+	if (on)
 		motg->connect_type = CONNECT_TYPE_INTERNAL;
-		queue_work(motg->usb_wq, &motg->notifier_work);
-	} else {
+	else
 		motg->connect_type = CONNECT_TYPE_CLEAR;
-		queue_work(motg->usb_wq, &motg->notifier_work);
-	}
+
+	queue_work(motg->usb_wq, &motg->notifier_work);
 }
 
 static int msm_otg_set_host(struct otg_transceiver *otg, struct usb_bus *host)

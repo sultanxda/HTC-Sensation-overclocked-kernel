@@ -261,7 +261,8 @@ config PM8058_CHARGER
 
 config ISL9519_CHARGER
 	tristate "isl9519 charger"
-	depends on BATTERY_MSM8X60
+	depends on (BATTERY_MSM8X60 || PM8921_CHARGER)
+	depends on I2C
 	default n
 	help
 	  The isl9519q charger chip from intersil is connected to an external
@@ -336,6 +337,13 @@ config PM8XXX_CCADC
 	depends on MFD_PM8921_CORE
 	help
 	  Say Y here to enable support for pm8921 chip bms subdevice
+
+config LTC4088_CHARGER
+	tristate "LTC4088 Charger driver"
+	depends on GPIOLIB
+	help
+	  Say Y here to enable support for ltc4088 chip charger. It controls the
+	  operations through GPIO pins.
 
 config PM8921_BMS
 	select PM8XXX_CCADC

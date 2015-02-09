@@ -46,7 +46,6 @@ enum rfkill_type {
 	RFKILL_TYPE_UWB,
 	RFKILL_TYPE_WIMAX,
 	RFKILL_TYPE_WWAN,
-	RFKILL_TYPE_FMTX,
 	RFKILL_TYPE_GPS,
 	RFKILL_TYPE_FM,
 	NUM_RFKILL_TYPES,
@@ -200,8 +199,11 @@ void rfkill_pause_polling(struct rfkill *rfkill);
  * NOTE: not necessary for suspend/resume -- in that case the
  * core stops polling anyway
  */
+#ifdef CONFIG_RFKILL_PM
 void rfkill_resume_polling(struct rfkill *rfkill);
-
+#else
+static inline void rfkill_resume_polling(struct rfkill *rfkill) { }
+#endif
 
 /**
  * rfkill_unregister - Unregister a rfkill structure.
