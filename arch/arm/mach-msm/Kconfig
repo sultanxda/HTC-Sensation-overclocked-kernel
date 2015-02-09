@@ -96,6 +96,33 @@ config ARCH_MSM8X60
 	select MSM_QDSP6_APR
 	select MSM_QDSP6_CODECS
 	select MSM_NATIVE_RESTART
+	select ARCH_INLINE_SPIN_TRYLOCK
+	select ARCH_INLINE_SPIN_TRYLOCK_BH
+	select ARCH_INLINE_SPIN_LOCK
+	select ARCH_INLINE_SPIN_LOCK_BH
+	select ARCH_INLINE_SPIN_LOCK_IRQ
+	select ARCH_INLINE_SPIN_LOCK_IRQSAVE
+	select ARCH_INLINE_SPIN_UNLOCK
+	select ARCH_INLINE_SPIN_UNLOCK_BH
+	select ARCH_INLINE_SPIN_UNLOCK_IRQ
+	select ARCH_INLINE_SPIN_UNLOCK_IRQRESTORE
+	select ARCH_INLINE_READ_TRYLOCK
+	select ARCH_INLINE_READ_LOCK
+	select ARCH_INLINE_READ_LOCK_BH
+	select ARCH_INLINE_READ_LOCK_IRQ
+	select ARCH_INLINE_READ_LOCK_IRQSAVE
+	select ARCH_INLINE_READ_UNLOCK
+	select ARCH_INLINE_READ_UNLOCK_BH
+	select ARCH_INLINE_READ_UNLOCK_IRQ
+	select ARCH_INLINE_READ_UNLOCK_IRQRESTORE
+	select ARCH_INLINE_WRITE_TRYLOCK
+	select ARCH_INLINE_WRITE_LOCK
+	select ARCH_INLINE_WRITE_LOCK_BH
+	select ARCH_INLINE_WRITE_LOCK_IRQ
+	select ARCH_INLINE_WRITE_LOCK_IRQSAVE
+	select ARCH_INLINE_WRITE_UNLOCK
+	select ARCH_INLINE_WRITE_UNLOCK_BH
+	select ARCH_INLINE_WRITE_UNLOCK_IRQRESTORE
 	select CPU_HAS_L2_PMU
 	select MSM_SPM_V1
 	select MSM_SCM if SMP
@@ -1373,12 +1400,12 @@ config MSM_CPU_FREQ_SET_MIN_MAX
 config MSM_CPU_FREQ_MAX
 	int "Max CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
-	default 1512000
+	default 384000
 
 config MSM_CPU_FREQ_MIN
 	int "Min CPU Frequency"
 	depends on MSM_CPU_FREQ_SET_MIN_MAX
-	default 192000
+	default 245760
 
 endif # CPU_FREQ_MSM
 
@@ -2015,15 +2042,6 @@ config MSM_QDSP6_CODECS
 	  used by audio driver to configure QDSP6's
 	  ASM, ADM and AFE.
 
-config MSM_QDSP6V2_CODECS
-	bool "Audio QDSP6V2 APR support"
-	depends on MSM_SMD
-	help
-	  Enable Audio codecs with APR IPC protocol support between
-	  application processor and QDSP6 for B-family. APR is
-	  used by audio driver to configure QDSP6's
-	  ASM, ADM and AFE.
-
 config MSM_AUDIO_QDSP6
         bool "QDSP6 HW Audio support"
         select SND_SOC_MSM_QDSP6_INTF
@@ -2032,15 +2050,11 @@ config MSM_AUDIO_QDSP6
           Enable HW audio support in QDSP6.
           QDSP6 can support HW encoder & decoder and audio processing
 
-config MSM_AUDIO_QDSP6V2
-        bool "QDSP6V2 HW Audio support"
-        select SND_SOC_MSM_QDSP6V2_INTF
-        help
-          Enable HW audio support in QDSP6V2.
-          QDSP6V2 can support HW encoder & decoder and
-          audio processing. It will enable support for
-          AAC, AMRNB, AMRWB, EVRC, MP3, QCELP among
-          others.
+config MSM_ULTRASOUND
+	bool "MSM ultrasound support"
+	depends on MSM_AUDIO_QDSP6
+	help
+	  Enable support for qdsp6/ultrasound.
 
 config MSM_RPC_VIBRATOR
 	bool "RPC based MSM Vibrator Support"
@@ -2082,7 +2096,7 @@ config MSM_L2_SPM
 	  on supported chipsets.
 
 config MSM_MULTIMEDIA_USE_ION
-	bool "Multimedia support using Ion"
+	bool "Multimedia suport using Ion"
 	depends on ION_MSM
 	help
 	  Enable support for multimedia drivers using Ion for buffer management
