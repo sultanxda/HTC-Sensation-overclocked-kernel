@@ -585,12 +585,10 @@ struct pwm_device *pwm_request(int pwm_id, const char *label)
 	if (!pwm->in_use) {
 		pwm->in_use = 1;
 		pwm->label = label;
-/* Do not to enable LED when request PWM
 		pwm->use_lut = 0;
 
 		if (pwm_chip->pdata && pwm_chip->pdata->config)
 			pwm_chip->pdata->config(pwm, pwm_id, 1);
-*/
 	} else
 		pwm = ERR_PTR(-EBUSY);
 	mutex_unlock(&pwm_chip->pwm_mutex);
@@ -822,50 +820,6 @@ out_unlock:
 	return rc;
 }
 EXPORT_SYMBOL(pm8058_pwm_config_duty_cycle);
-
-/*
- * pwm_configure - change a PWM device configuration
- */
-int pwm_configure(struct pwm_device *pwm, struct pm8058_pwm_period *pwm_conf, int bypass_lut, int pwm_value)
-{
-	int	rc;
-
-	if (pwm == NULL || IS_ERR(pwm) || pwm_conf == NULL)
-		return -EINVAL;
-	if (pwm->chip == NULL)
-		return -ENODEV;
-
-	if (!pwm->in_use)
-		rc = -EINVAL;
-	else {
-		pm8058_pwm_config_period(pwm, pwm_conf);
-		{
-			mutex_lock(&pwm->chip->pwm_mutex);
-
-			pwm->pwm_ctl[0] = 0;
-			pwm->pwm_ctl[1] = PM8058_PWM_BYPASS_LUT;
-			pwm->pwm_ctl[2] = 0;
-
-			if (pwm_conf->pwm_size > 6) {
-				pwm->pwm_ctl[3] = pwm_value
-							& PM8058_PWM_VALUE_BIT7_0;
-				pm8058_pwm_save(&pwm->pwm_ctl[4], PM8058_PWM_VALUE_BIT8, pwm_value >> 1);
-			} else {
-				pwm->pwm_ctl[3] = pwm_value
-							& PM8058_PWM_VALUE_BIT5_0;
-			}
-
-			pm8058_pwm_bank_sel(pwm);
-			rc = pm8058_pwm_write(pwm, 0, (pwm_conf->pwm_size > 6)? 4 : 3);
-
-			mutex_unlock(&pwm->chip->pwm_mutex);
-		}
-	}
-	return rc;
-}
-EXPORT_SYMBOL(pwm_configure);
-
-
 
 /**
  * pm8058_pwm_lut_config - change a PWM device configuration to use LUT

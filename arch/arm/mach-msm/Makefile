@@ -258,6 +258,7 @@ obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire-mmc.o board-sapphire-wifi.o
 obj-$(CONFIG_MACH_SAPPHIRE) += board-sapphire-rfkill.o msm_vibrator.o
 
 # MSM8x60 boards
+obj-$(CONFIG_MACH_PYRAMID) += board-pyramid-regulator.o board-pyramid-pmic.o
 obj-$(CONFIG_MACH_PYRAMID) += board-pyramid.o board-pyramid-display.o
 obj-$(CONFIG_MACH_PYRAMID) += board-pyramid-keypad.o
 obj-$(CONFIG_MACH_PYRAMID) += board-pyramid-audio.o

@@ -157,5 +157,9 @@ int __init pyramid_wifi_init(void);
 void pyramid_init_fb(void);
 void pyramid_allocate_fb_region(void);
 void __init pyramid_mdp_writeback(struct memtype_reserve* reserve_table);
+void __init pyramid_init_pmic(void);
+void __init pyramid_pm8901_gpio_mpp_init(void);
+extern struct pm8901_vreg_pdata pm8901_regulator_pdata[];
+extern int pm8901_regulator_pdata_len;
 void __init msm_fb_add_devices(void);
 #endif /* __ARCH_ARM_MACH_MSM_BOARD_PYRAMID_H */

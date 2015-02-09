@@ -840,7 +840,6 @@ static int marimba_probe(struct i2c_client *client,
 			ssbi_adap = NULL;
 
 		if (!marimba->client) {
-			if (!(&marimba->client->dev))
 			dev_err(&marimba->client->dev,
 				"can't attach client %d\n", i);
 			status = -ENOMEM;

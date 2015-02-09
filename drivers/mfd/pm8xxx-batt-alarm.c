@@ -241,13 +241,6 @@ bail:
 }
 EXPORT_SYMBOL(pm8xxx_batt_alarm_disable);
 
-/**
- * pm8xxx_batt_alarm_state_set - enable or disable the threshold comparators
- * @enable_lower_comparator: 1 = enable comparator, 0 = disable comparator
- * @enable_upper_comparator: 1 = enable comparator, 0 = disable comparator
- *
- * RETURNS: an appropriate -ERRNO error value on error, or zero for success.
- */
 int pm8xxx_batt_alarm_state_set(int enable_lower_comparator,
 				int enable_upper_comparator)
 {

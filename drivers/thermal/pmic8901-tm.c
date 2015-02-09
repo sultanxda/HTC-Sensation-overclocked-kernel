@@ -81,7 +81,7 @@ static inline int pm8901_tm_read_ctrl(struct pm8901_chip *chip, u8 *reg)
 {
 	int rc;
 
-	rc = pm8901_read(chip, SSBI_REG_TEMP_ALRM_CTRL, reg, 1);
+	rc = pm8901_readb(chip->dev->parent, SSBI_REG_TEMP_ALRM_CTRL, reg);
 	if (rc)
 		pr_err("%s: pm8901_read FAIL: rc=%d\n", __func__, rc);
 
@@ -92,7 +92,7 @@ static inline int pm8901_tm_write_ctrl(struct pm8901_chip *chip, u8 reg)
 {
 	int rc;
 
-	rc = pm8901_write(chip, SSBI_REG_TEMP_ALRM_CTRL, &reg, 1);
+	rc = pm8901_writeb(chip->dev->parent, SSBI_REG_TEMP_ALRM_CTRL, reg);
 	if (rc)
 		pr_err("%s: pm8901_write FAIL: rc=%d\n", __func__, rc);
 
@@ -103,7 +103,7 @@ static inline int pm8901_tm_read_pwm(struct pm8901_chip *chip, u8 *reg)
 {
 	int rc;
 
-	rc = pm8901_read(chip, SSBI_REG_TEMP_ALRM_PWM, reg, 1);
+	rc = pm8901_readb(chip->dev->parent, SSBI_REG_TEMP_ALRM_PWM, reg);
 	if (rc)
 		pr_err("%s: pm8901_read FAIL: rc=%d\n", __func__, rc);
 
@@ -114,7 +114,7 @@ static inline int pm8901_tm_write_pwm(struct pm8901_chip *chip, u8 reg)
 {
 	int rc;
 
-	rc = pm8901_write(chip, SSBI_REG_TEMP_ALRM_PWM, &reg, 1);
+	rc = pm8901_writeb(chip->dev->parent, SSBI_REG_TEMP_ALRM_PWM, reg);
 	if (rc)
 		pr_err("%s: pm8901_write FAIL: rc=%d\n", __func__, rc);
 

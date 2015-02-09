@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2012, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -23,7 +23,6 @@
 #include <linux/slab.h>
 #include <linux/ratelimit.h>
 #include <linux/delay.h>
-#include <linux/kernel_stat.h>
 #include <linux/wakelock.h>
 
 #include <mach/mpp.h>
@@ -37,14 +36,14 @@
 
 /* User Processor */
 #define ADC_ARB_USRP_CNTRL                      0x197
-#define ADC_ARB_USRP_CNTRL_EN_ARB	BIT(0)
-#define ADC_ARB_USRP_CNTRL_RSV1		BIT(1)
-#define ADC_ARB_USRP_CNTRL_RSV2		BIT(2)
-#define ADC_ARB_USRP_CNTRL_RSV3		BIT(3)
-#define ADC_ARB_USRP_CNTRL_RSV4		BIT(4)
-#define ADC_ARB_USRP_CNTRL_RSV5		BIT(5)
-#define ADC_ARB_USRP_CNTRL_EOC		BIT(6)
-#define ADC_ARB_USRP_CNTRL_REQ		BIT(7)
+	#define ADC_ARB_USRP_CNTRL_EN_ARB	BIT(0)
+	#define ADC_ARB_USRP_CNTRL_RSV1		BIT(1)
+	#define ADC_ARB_USRP_CNTRL_RSV2		BIT(2)
+	#define ADC_ARB_USRP_CNTRL_RSV3		BIT(3)
+	#define ADC_ARB_USRP_CNTRL_RSV4		BIT(4)
+	#define ADC_ARB_USRP_CNTRL_RSV5		BIT(5)
+	#define ADC_ARB_USRP_CNTRL_EOC		BIT(6)
+	#define ADC_ARB_USRP_CNTRL_REQ		BIT(7)
 
 #define ADC_ARB_USRP_AMUX_CNTRL         0x198
 #define ADC_ARB_USRP_ANA_PARAM          0x199
@@ -77,6 +76,7 @@ static struct mutex mpp_mutex;
 static struct mutex adc_mutex;
 static struct mutex list_mutex;
 static struct mutex mlock;
+
 static int queue_count;
 static int gain_denominator, gain_numerator;
 static int debug_counter;
@@ -132,7 +132,7 @@ void pm8058_xoadc_slot_request(uint32_t adc_instance,
 EXPORT_SYMBOL(pm8058_xoadc_slot_request);
 
 static int32_t pm8058_xoadc_arb_cntrl(uint32_t arb_cntrl,
-				uint32_t adc_instance) /*, uint32_t channel) */
+				uint32_t adc_instance, uint32_t channel)
 {
 	struct pmic8058_adc *adc_pmic = pmic_adc[adc_instance];
 	int i, rc;
@@ -144,8 +144,8 @@ static int32_t pm8058_xoadc_arb_cntrl(uint32_t arb_cntrl,
 
 	if (arb_cntrl) {
 		if (adc_pmic->msm_suspend_check)
-			pr_err("XOADC request being made after suspend irq.\n");
-				/*  "with channel id:%d\n", channel); */
+			pr_err("XOADC request being made after suspend irq "
+				 "with channel id:%d\n", channel);
 		data_arb_cntrl |= ADC_ARB_USRP_CNTRL_EN_ARB;
 		msm_xo_mode_vote(adc_pmic->adc_voter, MSM_XO_MODE_ON);
 		adc_pmic->pdata->xoadc_mpp_config();
@@ -180,7 +180,7 @@ static int32_t pm8058_xoadc_configure(uint32_t adc_instance,
 	u8 data_dig_param = 0, data_ana_param2 = 0, data_ana_param = 0;
 	int rc;
 
-	rc = pm8058_xoadc_arb_cntrl(1, adc_instance);
+	rc = pm8058_xoadc_arb_cntrl(1, adc_instance, slot->chan_path);
 	if (rc < 0) {
 		pr_debug("%s: Configuring ADC Arbiter"
 				"enable failed\n", __func__);
@@ -234,7 +234,7 @@ static int32_t pm8058_xoadc_configure(uint32_t adc_instance,
 		data_arb_rsv = 0x20;
 		slot->chan_properties.gain_numerator = 1;
 		slot->chan_properties.gain_denominator = 1;
-		slot->chan_properties.adc_graph = &adc_pmic->adc_graph[0];
+		slot->chan_properties.adc_graph = &adc_pmic->adc_graph[1];
 		break;
 
 	case CHAN_PATH_TYPE7:
@@ -407,6 +407,7 @@ int32_t pm8058_xoadc_select_chan_and_start_conv(uint32_t adc_instance,
 	return 0;
 }
 EXPORT_SYMBOL(pm8058_xoadc_select_chan_and_start_conv);
+
 #if 0
 static int32_t pm8058_xoadc_dequeue_slot_request(uint32_t adc_instance,
 				struct adc_conv_slot **slot)
@@ -434,6 +435,7 @@ static int32_t pm8058_xoadc_dequeue_slot_request(uint32_t adc_instance,
 	return 0;
 }
 #endif
+
 int32_t pm8058_xoadc_read_adc_code(uint32_t adc_instance, int32_t *data)
 {
 	struct pmic8058_adc *adc_pmic = pmic_adc[adc_instance];
@@ -484,9 +486,9 @@ int32_t pm8058_xoadc_read_adc_code(uint32_t adc_instance, int32_t *data)
 	/* Default value for switching off the arbiter after reading
 	   the ADC value. Bit 0 set to 0. */
 	if (adc_pmic->xoadc_queue_count == 0) {
-		rc = pm8058_xoadc_arb_cntrl(0, adc_instance);
+		rc = pm8058_xoadc_arb_cntrl(0, adc_instance, CHANNEL_MUXOFF);
 		if (rc < 0) {
-			pr_err("%s: Configuring ADC Arbiter disable"
+			pr_debug("%s: Configuring ADC Arbiter disable"
 						"failed\n", __func__);
 			return rc;
 		}
@@ -498,6 +500,7 @@ int32_t pm8058_xoadc_read_adc_code(uint32_t adc_instance, int32_t *data)
 	return 0;
 }
 EXPORT_SYMBOL(pm8058_xoadc_read_adc_code);
+
 #if 1
 static irqreturn_t pm8058_xoadc(int irq, void *dev_id)
 {
@@ -548,12 +551,14 @@ static int32_t pm8058_configure_and_read(uint32_t adc_instance, int32_t channels
 	u8 data_dig_param, data_ana_param2;
 	uint8_t rslt_lsb, rslt_msb;
 	int32_t max_ideal_adc_code = 1 << adc_pmic->adc_prop->bitresolution;
+	struct irq_desc * irq_desc = irq_to_desc(adc_pmic->adc_irq);
 	DECLARE_COMPLETION_ONSTACK(done);
 
 	mutex_lock(&mlock);
 	if (adc_pmic->msm_suspend_check) {
 		mutex_unlock(&mlock);
 		pr_err("device enters suspend!\n");
+		pr_info("%s %d: --\n", __func__, __LINE__);
 		return -EIO;
 	}
 
@@ -561,7 +566,7 @@ static int32_t pm8058_configure_and_read(uint32_t adc_instance, int32_t channels
 
 	adc_pmic->done = &done;
 
-	rc = pm8058_xoadc_arb_cntrl(1, adc_instance);
+	rc = pm8058_xoadc_arb_cntrl(1, adc_instance, channels);
 	if (rc < 0) {
 		pr_err("%s: Configuring ADC Arbiter"
 				"enable failed\n", __func__);
@@ -614,7 +619,7 @@ static int32_t pm8058_configure_and_read(uint32_t adc_instance, int32_t channels
 	data_ana_param = 0xFE;
 	data_dig_param = 0x03;
 	data_ana_param2 = 0xFF;
-	/* AMUX register data to start the ADC conversion */
+	
 	data_arb_cntrl = 0xF1;
 
 	rc = pm8xxx_writeb(adc_pmic->dev->parent,
@@ -650,21 +655,19 @@ static int32_t pm8058_configure_and_read(uint32_t adc_instance, int32_t channels
 	rc = wait_for_completion_timeout(&done, HZ);
 
 	if (!rc) {
-		/*struct irqaction *act = irq_desc[adc_pmic->adc_irq].action;*/
+		pr_err("%s: wait_for_completion_interruptible_timeout (cnt=%d)\n",
+			__func__, ++debug_counter);
+		pr_err("%s: msm_suspend_check: %d\n", __func__, adc_pmic->msm_suspend_check);
 
-		disable_irq(adc_pmic->adc_irq);
-		pr_err("%s: wait_for_completion_interruptible_timeout\n",
-			__func__);
-		/*pr_err("%5d: %10u %8x  %s\n", adc_pmic->adc_irq,
-				kstat_irqs(adc_pmic->adc_irq),
-				irq_desc[adc_pmic->adc_irq].status,
-				(act && act->name) ? act->name : "???");*/
+		if (irq_desc->depth == 0)
+			disable_irq(adc_pmic->adc_irq);
+		else
+			pr_info("[ADC] irq already disabled, skip disable_irq\n");
+
 		if (debug_counter >= 10000) {
 			debug_counter = 0;
-			/*BUG_ON(1);*/
+			
 		}
-		pr_info("%s: PM8058 wait timeout %d\n", __func__, debug_counter++);
-
 		rc = -ETIMEDOUT;
 		goto configure_and_read_failed;
 	}
@@ -683,12 +686,13 @@ static int32_t pm8058_configure_and_read(uint32_t adc_instance, int32_t channels
 
 	*data = (rslt_msb << 8) | rslt_lsb;
 
-	/* Use the midpoint to determine underflow or overflow */
+	
 	if (*data > max_ideal_adc_code + (max_ideal_adc_code >> 1))
 		*data |= ((1 << (8 * sizeof(*data) -
 			adc_pmic->adc_prop->bitresolution)) - 1) <<
 			adc_pmic->adc_prop->bitresolution;
 		debug_counter = 0;
+
 configure_and_read_failed:
 	adc_pmic->done = NULL;
 	mutex_unlock(&adc_mutex);
@@ -825,8 +829,8 @@ fail:
 
 	return rc;
 }
-EXPORT_SYMBOL(pm8058_xoadc_calib_device);
 #endif
+EXPORT_SYMBOL(pm8058_xoadc_calib_device);
 
 static int32_t pm8058_htc_read_adc(uint32_t adc_instance, int32_t *result,
 					int32_t size, int32_t channels)
@@ -834,8 +838,8 @@ static int32_t pm8058_htc_read_adc(uint32_t adc_instance, int32_t *result,
 	struct pmic8058_adc *adc_pmic = pmic_adc[adc_instance];
 	bool negative_rawfromoffset = 0;
 	int32_t rawfromoffset = 0;
-	int32_t i, adc_code, ret = 0;
-	int64_t measurement;
+	int32_t i, adc_code = 0, ret = 0;
+	int64_t measurement = 0;
 
 	pr_debug("%s sz=%d channel=%d", __func__, size, channels);
 	for (i = 0; i < size; i++) {
@@ -936,7 +940,7 @@ config_and_read_failed:
 	mutex_lock(&list_mutex);
 	queue_count--;
 	if (queue_count == 0)
-		pm8058_xoadc_arb_cntrl(0, 0);
+                pm8058_xoadc_arb_cntrl(0, 0, channels);
 	mutex_unlock(&list_mutex);
 
 	return ret;
@@ -982,23 +986,6 @@ static const struct dev_pm_ops pm8058_xoadc_dev_pm_ops = {
 #define PM8058_XOADC_DEV_PM_OPS NULL
 #endif
 
-static int __devexit pm8058_xoadc_teardown(struct platform_device *pdev)
-{
-	struct pmic8058_adc *adc_pmic = platform_get_drvdata(pdev);
-
-	if (adc_pmic->pdata->xoadc_vreg_shutdown != NULL)
-		adc_pmic->pdata->xoadc_vreg_shutdown();
-
-	wake_lock_destroy(&adc_pmic->adc_wakelock);
-	msm_xo_put(adc_pmic->adc_voter);
-	platform_set_drvdata(pdev, NULL);
-	device_init_wakeup(&pdev->dev, 0);
-	kfree(adc_pmic);
-	xoadc_initialized = false;
-
-	return 0;
-}
-
 static int __devinit pm8058_xoadc_probe(struct platform_device *pdev)
 {
 	struct xoadc_platform_data *pdata = pdev->dev.platform_data;
@@ -1010,7 +997,7 @@ static int __devinit pm8058_xoadc_probe(struct platform_device *pdev)
 		return -EINVAL;
 	}
 
-	adc_pmic = kzalloc(sizeof(struct pmic8058_adc), GFP_KERNEL);
+	adc_pmic = devm_kzalloc(&pdev->dev, sizeof(*adc_pmic), GFP_KERNEL);
 	if (!adc_pmic) {
 		dev_err(&pdev->dev, "Unable to allocate memory\n");
 		return -ENOMEM;
@@ -1020,23 +1007,21 @@ static int __devinit pm8058_xoadc_probe(struct platform_device *pdev)
 	adc_pmic->adc_prop = pdata->xoadc_prop;
 	adc_pmic->xoadc_num = pdata->xoadc_num;
 	adc_pmic->xoadc_queue_count = 0;
-	adc_pmic->done = NULL;
 
 	platform_set_drvdata(pdev, adc_pmic);
 
 	if (adc_pmic->xoadc_num > XOADC_PMIC_0) {
 		dev_err(&pdev->dev, "ADC device not supported\n");
-		rc = -EINVAL;
-		goto err_cleanup;
+		return -EINVAL;
 	}
 
 	adc_pmic->pdata = pdata;
-	adc_pmic->adc_graph = kzalloc(sizeof(struct linear_graph)
-			* MAX_CHANNEL_PROPERTIES_QUEUE, GFP_KERNEL);
+	adc_pmic->adc_graph = devm_kzalloc(&pdev->dev,
+		sizeof(struct linear_graph) * MAX_CHANNEL_PROPERTIES_QUEUE,
+		GFP_KERNEL);
 	if (!adc_pmic->adc_graph) {
 		dev_err(&pdev->dev, "Unable to allocate memory\n");
-		rc = -ENOMEM;
-		goto err_cleanup;
+		return -ENOMEM;
 	}
 
 	/* Will be replaced by individual channel calibration */
@@ -1077,32 +1062,29 @@ static int __devinit pm8058_xoadc_probe(struct platform_device *pdev)
 	INIT_LIST_HEAD(&adc_pmic->conv_queue_list->slots);
 
 	adc_pmic->adc_irq = platform_get_irq(pdev, 0);
-	if (adc_pmic->adc_irq < 0) {
-		rc = -ENXIO;
-		goto err_cleanup;
-	}
+	if (adc_pmic->adc_irq < 0)
+		return -ENXIO;
 
 	rc = request_threaded_irq(adc_pmic->adc_irq,
 				NULL, pm8058_xoadc,
 		IRQF_TRIGGER_RISING, "pm8058_adc_interrupt", adc_pmic);
 	if (rc) {
 		dev_err(&pdev->dev, "failed to request adc irq\n");
-		goto err_cleanup;
+		return rc;
 	}
 
 	disable_irq(adc_pmic->adc_irq);
-
-	device_init_wakeup(&pdev->dev, pdata->xoadc_wakeup);
 
 	if (adc_pmic->adc_voter == NULL) {
 		adc_pmic->adc_voter = msm_xo_get(MSM_XO_TCXO_D1,
 							"pmic8058_xoadc");
 		if (IS_ERR(adc_pmic->adc_voter)) {
 			dev_err(&pdev->dev, "Failed to get XO vote\n");
-			goto err_cleanup;
+			return PTR_ERR(adc_pmic->adc_voter);
 		}
 	}
 
+	device_init_wakeup(&pdev->dev, pdata->xoadc_wakeup);
 	wake_lock_init(&adc_pmic->adc_wakelock, WAKE_LOCK_SUSPEND,
 					"pmic8058_xoadc_wakelock");
 
@@ -1113,17 +1095,23 @@ static int __devinit pm8058_xoadc_probe(struct platform_device *pdev)
 
 	xoadc_initialized = true;
 	xoadc_calib_first_adc = false;
-	xoadc_calib_adc = false;
-
-	queue_count = 0;
-	debug_counter = 0;
 
 	return 0;
+}
 
-err_cleanup:
-	pm8058_xoadc_teardown(pdev);
+static int __devexit pm8058_xoadc_teardown(struct platform_device *pdev)
+{
+	struct pmic8058_adc *adc_pmic = platform_get_drvdata(pdev);
 
-	return rc;
+	if (adc_pmic->pdata->xoadc_vreg_shutdown != NULL)
+		adc_pmic->pdata->xoadc_vreg_shutdown();
+
+	wake_lock_destroy(&adc_pmic->adc_wakelock);
+	msm_xo_put(adc_pmic->adc_voter);
+	device_init_wakeup(&pdev->dev, 0);
+	xoadc_initialized = false;
+
+	return 0;
 }
 
 static struct platform_driver pm8058_xoadc_driver = {
@@ -1140,7 +1128,7 @@ static int __init pm8058_xoadc_init(void)
 {
 	return platform_driver_register(&pm8058_xoadc_driver);
 }
-fs_initcall(pm8058_xoadc_init);
+module_init(pm8058_xoadc_init);
 
 static void __exit pm8058_xoadc_exit(void)
 {

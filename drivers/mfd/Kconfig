@@ -158,27 +158,16 @@ config PMIC8058
 	depends on MSM_SSBI
 	select MFD_CORE
 	select MFD_PM8XXX
-	select MSM_SHOW_RESUME_IRQ
 	help
 	  Say yes here for Qualcomm PM8058 chip.
 
 config PMIC8901
 	tristate "PMIC8901 Power Management chip"
-	depends on I2C_SSBI && ARCH_MSM8X60
-	default y if I2C_SSBI && ARCH_MSM8X60
+	depends on MSM_SSBI
 	select MFD_CORE
+	select MFD_PM8XXX
 	help
 	  Say yes here for Qualcomm PM8901 chip.
-
-config MFD_MAX8957
-	tristate "Support Maxim MAX8957"
-	depends on I2C && ARCH_MSM7X30
-	select MFD_CORE
-	help
-		Support for the Maxim MAX8957 PMIC.
-		This driver provides common support for accessing
-		the device, additional drivers must be enabled in order to use
-		the functionality of the device.
 
 config MARIMBA_TSADC
 	tristate "Support for Marimba Touchscreen ADC"
@@ -815,6 +804,21 @@ config MFD_PM8018_CORE
 	  Say M here if you want to include support for PM8018 chip as a module.
 	  This will build a module called "pm8018-core".
 
+config MFD_PM8038_CORE
+	tristate "Qualcomm PM8038 PMIC chip"
+	depends on MSM_SSBI
+	select MFD_CORE
+	select MFD_PM8XXX
+	help
+	  If you say yes to this option, support will be included for the
+	  built-in PM8038 PMIC chip.
+
+	  This is required if your board has a PM8038 and uses its features,
+	  such as: MPPs, GPIOs, regulators, interrupts, and PWM.
+
+	  Say M here if you want to include support for PM8038 chip as a module.
+	  This will build a module called "pm8038-core".
+
 config MFD_PM8XXX_IRQ
 	bool "Support for Qualcomm PM8xxx IRQ features"
 	depends on MFD_PM8XXX
@@ -864,14 +868,6 @@ config MFD_PM8XXX_MISC
 	help
 	  This driver implements several miscellaneous APIs that may be needed
 	  in order to control the PM8XXX PMIC chip.
-
-config MFD_PM8XXX_HAPTIC
-	tristate "Support for TI DRV8601 "
-	depends on MFD_PM8XXX_PWM
-	default y if MFD_PM8XXX_PWM
-	help
-	  This is the HAPTIC driver for TI DRV8601 chips.
-	  It will enable Immersion solution.
 
 config MFD_PM8XXX_BATT_ALARM
 	tristate "Support for Qualcomm PM8xxx battery voltage alarm"
