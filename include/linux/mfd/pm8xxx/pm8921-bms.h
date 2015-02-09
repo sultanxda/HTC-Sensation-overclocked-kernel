@@ -1,4 +1,4 @@
-/* Copyright (c) 2011, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2013, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -14,25 +14,17 @@
 #define __PM8XXX_BMS_H
 
 #include <linux/errno.h>
+#include <linux/mfd/pm8xxx/batterydata-lib.h>
 
 #define PM8921_BMS_DEV_NAME	"pm8921-bms"
 
 #define FCC_CC_COLS		5
 #define FCC_TEMP_COLS		8
 
-#define PC_CC_ROWS		10
-#define PC_CC_COLS		5
-
 #define PC_TEMP_ROWS		29
 #define PC_TEMP_COLS		8
 
 #define MAX_SINGLE_LUT_COLS	20
-
-struct single_row_lut {
-	int x[MAX_SINGLE_LUT_COLS];
-	int y[MAX_SINGLE_LUT_COLS];
-	int cols;
-};
 
 /**
  * struct pc_sf_lut -
@@ -50,24 +42,6 @@ struct pc_sf_lut {
 	int cycles[PC_CC_COLS];
 	int percent[PC_CC_ROWS];
 	int sf[PC_CC_ROWS][PC_CC_COLS];
-};
-
-/**
- * struct pc_temp_ocv_lut -
- * @rows:	number of percent charge entries should be <= PC_TEMP_ROWS
- * @cols:	number of temperature entries should be <= PC_TEMP_COLS
- * @temp:	the temperatures at which ocv data is available in the table
- *		The temperatures must be in increasing order from 0 to rows.
- * @percent:	the percent charge at which ocv data is available in the table
- *		The  percentcharge must be in decreasing order from 0 to cols.
- * @ocv:	the open circuit voltage
- */
-struct pc_temp_ocv_lut {
-	int rows;
-	int cols;
-	int temp[PC_TEMP_COLS];
-	int percent[PC_TEMP_ROWS];
-	int ocv[PC_TEMP_ROWS][PC_TEMP_COLS];
 };
 
 /**
@@ -105,14 +79,34 @@ struct pm8xxx_bms_core_data {
  */
 struct pm8921_bms_platform_data {
 	struct pm8xxx_bms_core_data	bms_cdata;
-	unsigned int			r_sense;
+	enum battery_type		battery_type;
+	int				r_sense_uohm;
 	unsigned int			i_test;
-	unsigned int			v_failure;
-	unsigned int			calib_delay_ms;
+	unsigned int			v_cutoff;
+	unsigned int			max_voltage_uv;
+	unsigned int			rconn_mohm;
+	unsigned int			alarm_low_mv;
+	unsigned int			alarm_high_mv;
+	int				enable_fcc_learning;
+	int				min_fcc_learning_soc;
+	int				min_fcc_ocv_pc;
+	int				min_fcc_learning_samples;
+	int				shutdown_soc_valid_limit;
+	int				ignore_shutdown_soc;
+	int				adjust_soc_low_threshold;
+	int				chg_term_ua;
+	int				normal_voltage_calc_ms;
+	int				low_voltage_calc_ms;
+	int				disable_flat_portion_ocv;
+	int				ocv_dis_high_soc;
+	int				ocv_dis_low_soc;
+	int				low_voltage_detect;
+	int				vbatt_cutoff_retries;
+	int				high_ocv_correction_limit_uv;
+	int				low_ocv_correction_limit_uv;
+	int				hold_soc_est;
 };
-
 #if defined(CONFIG_PM8921_BMS) || defined(CONFIG_PM8921_BMS_MODULE)
-extern struct pm8921_bms_battery_data  palladium_1500_data;
 /**
  * pm8921_bms_get_vsense_avg - return the voltage across the sense
  *				resitor in microvolts
@@ -129,7 +123,7 @@ int pm8921_bms_get_vsense_avg(int *result);
 
 /**
  * pm8921_bms_get_battery_current - return the battery current based on vsense
- *				resitor in milliamperes
+ *				resitor in microamperes
  * @result:	The pointer where the voltage will be updated. A -ve
  *		result means that the current is flowing in
  *		the battery - during battery charging
@@ -165,22 +159,16 @@ void pm8921_bms_charging_began(void);
  *				track of chargecycles
  */
 void pm8921_bms_charging_end(int is_battery_full);
-#ifdef CONFIG_HTC_BATT_8960
-/********************************************/
-/* htc_gauge/htc_charger abstract interface */
-/********************************************/
-/**
- * pm8921_bms_get_batt_current - get battery voltage in mA
- *
- */
-int pm8921_bms_get_batt_current(int *result);
 
+void pm8921_bms_calibrate_hkadc(void);
 /**
- * pm8921_bms_get_batt_soc - get battery voltage in percent
- *
+ * pm8921_bms_get_simultaneous_battery_voltage_and_current
+ *		- function to take simultaneous vbat and vsense readings
+ *		  this puts the bms in override mode but keeps coulumb couting
+ *		  on. Useful when ir compensation needs to be implemented
  */
-int pm8921_bms_get_batt_soc(int *result);
-#endif /* CONFIG_HTC_BATT_8960 */
+int pm8921_bms_get_simultaneous_battery_voltage_and_current(int *ibat_ua,
+								int *vbat_uv);
 #else
 static inline int pm8921_bms_get_vsense_avg(int *result)
 {
@@ -204,16 +192,14 @@ static inline void pm8921_bms_charging_began(void)
 static inline void pm8921_bms_charging_end(int is_battery_full)
 {
 }
-#ifdef CONFIG_HTC_BATT_8960
-static inline int pm8921_bms_get_batt_current(int *result);
+static inline void pm8921_bms_calibrate_hkadc(void)
+{
+}
+static inline int pm8921_bms_get_simultaneous_battery_voltage_and_current(
+						int *ibat_ua, int *vbat_uv)
 {
 	return -ENXIO;
 }
-static inline int pm8921_bms_get_batt_soc(int *result);
-{
-	return -ENXIO;
-}
-#endif /* CONFIG_HTC_BATT_8960 */
 #endif
 
 #endif

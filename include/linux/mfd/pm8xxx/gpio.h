@@ -69,6 +69,15 @@ struct pm8xxx_gpio_platform_data {
 #define PM8058_GPIO_VIN_L5		6
 #define PM8058_GPIO_VIN_L2		7
 
+/* vin_sel: Voltage Input Select on PM8038*/
+#define PM8038_GPIO_VIN_VPH		0
+#define PM8038_GPIO_VIN_BB		1
+#define PM8038_GPIO_VIN_L11		2
+#define PM8038_GPIO_VIN_L15		3
+#define PM8038_GPIO_VIN_L4		4
+#define PM8038_GPIO_VIN_L3		5
+#define PM8038_GPIO_VIN_L17		6
+
 /* out_strength */
 #define	PM_GPIO_STRENGTH_NO		0
 #define	PM_GPIO_STRENGTH_HIGH		1
@@ -133,16 +142,10 @@ struct pm_gpio {
  * RETURNS: an appropriate -ERRNO error value on error, or zero for success.
  */
 int pm8xxx_gpio_config(int gpio, struct pm_gpio *param);
-int pm8xxx_dump_gpios(struct seq_file *m, int curr_len, char *gpio_buffer);
 #else
 static inline int pm8xxx_gpio_config(int gpio, struct pm_gpio *param)
 {
 	return -ENXIO;
-}
-static inline int pm8xxx_dump_gpios(struct seq_file *m, int curr_len, char *gpio_buffer)
-{
-	return curr_len;
-
 }
 #endif
 

@@ -62,8 +62,8 @@ config AD525X_DPOT_SPI
 	  module will be called ad525x_dpot-spi.
 
 config ANDROID_PMEM
-	bool "Android pmem allocator"
-	default y
+        bool "Android pmem allocator"
+        default y
 
 config ATMEL_PWM
 	tristate "Atmel AT32/AT91 PWM support"
@@ -562,6 +562,14 @@ config TSIF_DEBUG
 	---help---
 	  This turns on debugging information for the tsif driver
 
+config TSPP
+	depends on ARCH_MSM
+	tristate "TSPP (Transport Stream Packet Processor) Support"
+	---help---
+	Transport Stream Packet Processor is used to offload the
+	processing of MPEG transport streams from the main processor.
+	This can also be compiled as a loadable module.
+
 config HAPTIC_ISA1200
 	tristate "ISA1200 haptic support"
 	depends on I2C
@@ -578,14 +586,6 @@ config PMIC8058_PWM
 	  on Qualcomm PM8058 chip. Pulse Width Modulation is used for
 	  purposes including software controlled brightness of backlight,
 	  motor control, and waveform generation.
-
-config PMIC8058_VIBRATOR
-	tristate "Qualcomm PM8058 vibrator support"
-	depends on PMIC8058 && ANDROID_TIMED_OUTPUT
-	default n
-	help
-	  This option enables device driver support for the vibrator
-	  on Qualcomm PM8058 chip.
 
 config PMIC8XXX_VIBRATOR
 	tristate "Qualcomm Vibrator support for PMIC8XXX"
@@ -620,22 +620,20 @@ config PMIC8058_XOADC
 	  PMIC8058. Driver interface to program registers of the ADC over
 	  AMUX channels, devices on programmable MPP's and xotherm.
 
-config PMIC8058_MISC
-	tristate "Qualcomm PM8058 Misc Device driver"
-	depends on PMIC8058
+config TZCOM
+	tristate "Trustzone Communicator driver"
 	default n
 	help
-	  Provides functionality for various small drivers utilizing the
-	  Qualcomm PM8058 chip.  Examples include: signalling when the 32kHz
-	  oscillator malfunctions.
+	  Provides a communication interface between userspace and
+	  TrustZone Operating Environment (TZBSP) using Secure Channel
+	  Manager (SCM) interface.
 
-config PMIC8058_BATTALARM
-	tristate "Qualcomm PM8058 Battery Alarm Device driver"
-	depends on PMIC8058
+config QSEECOM
+	tristate "Qualcomm Secure Execution Communicator driver"
 	help
-	  This option enables support for the battery alarm module on the
-	  Qualcomm PM8058 PMIC chip.  This support allows for configuration of
-	  the alarm module as well as interrupt handling.
+	  Provides a communication interface between userspace and
+	  Qualcomm Secure Execution Environment (QSEE) using Secure Channel
+	  Manager (SCM) interface.
 
 config QFP_FUSE
 	tristate "QFPROM Fuse Read/Write support"
@@ -652,30 +650,12 @@ config CABLE_DETECT_8X60
         help
           Detect usb, ac and other accessories.
 
-config CABLE_DETECT_8960
-        boolean "Cable detect driver"
-        depends on ARCH_MSM8960
-        default n
-        help
-          Detect usb, ac and other accessories.
-
-config CABLE_DETECT_8X55
-        boolean "Cable detect driver"
-        default n
-        help
-          Detect usb, ac and other accessories.
-
 config CABLE_DETECT_ACCESSORY
         boolean "CABLE ACCESSORY DETECT"
         default n
 
 config CABLE_DETECT_ACCESSORY_BY_ADC
         boolean "DETECT ACCESSORY BY PMIC ADC"
-        default n
-
-config CABLE_DETECT_GPIO_DOCK
-        boolean "CABLE_DETECT_GPIO_DOCK"
-        depends on CABLE_DETECT_8960
         default n
 
 source "drivers/misc/c2port/Kconfig"

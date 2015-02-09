@@ -159,7 +159,7 @@ enum msm_spi_state {
 #define SPI_NUM_CHIPSELECTS           4
 #define SPI_SUPPORTED_MODES  (SPI_CPOL | SPI_CPHA | SPI_CS_HIGH | SPI_LOOP)
 
-#define SPI_DELAY_THRESHOLD           5
+#define SPI_DELAY_THRESHOLD           1
 /* Default timeout is 10 milliseconds */
 #define SPI_DEFAULT_TIMEOUT           10
 /* 250 microseconds */
@@ -2259,7 +2259,7 @@ static int __init msm_spi_probe(struct platform_device *pdev)
 			rc = pdata->dma_config();
 			if (rc) {
 				dev_warn(&pdev->dev,
-					"[SPI]%s: DM mode not supported\n",
+					"%s: DM mode not supported\n",
 					__func__);
 				dd->use_dma = 0;
 				goto skip_dma_resources;
@@ -2290,7 +2290,7 @@ skip_dma_resources:
 			rc = pdata->gpio_config();
 			if (rc) {
 				dev_err(&pdev->dev,
-					"[SPI]%s: error configuring GPIOs\n",
+					"%s: error configuring GPIOs\n",
 					__func__);
 				goto err_probe_gpio;
 			}
@@ -2301,7 +2301,6 @@ skip_dma_resources:
 		resource = platform_get_resource_byname(pdev, IORESOURCE_IO,
 							spi_rsrcs[i]);
 		dd->spi_gpios[i] = resource ? resource->start : -1;
-		pr_info("[Glenn] dd->spi_gpios[%d]: %d\n", i, dd->spi_gpios[i]);
 	}
 
 	for (i = 0; i < ARRAY_SIZE(spi_cs_rsrcs); ++i) {
@@ -2344,14 +2343,14 @@ skip_dma_resources:
 
 		rc = remote_mutex_init(&dd->r_lock, &rmid);
 		if (rc) {
-			dev_err(&pdev->dev, "[SPI]%s: unable to init remote_mutex "
+			dev_err(&pdev->dev, "%s: unable to init remote_mutex "
 				"(%s), (rc=%d)\n", rmid.r_spinlock_id,
 				__func__, rc);
 			goto err_probe_rlock_init;
 		}
 		dd->use_rlock = 1;
 		dd->pm_lat = pdata->pm_lat;
-		pm_qos_add_request(&qos_req_list, PM_QOS_CPU_DMA_LATENCY,
+		pm_qos_add_request(&qos_req_list, PM_QOS_CPU_DMA_LATENCY, 
 					    	 PM_QOS_DEFAULT_VALUE);
 	}
 	mutex_lock(&dd->core_lock);
@@ -2362,14 +2361,14 @@ skip_dma_resources:
 	dd->dev = &pdev->dev;
 	dd->clk = clk_get(&pdev->dev, "core_clk");
 	if (IS_ERR(dd->clk)) {
-		dev_err(&pdev->dev, "[SPI]%s: unable to get core_clk\n", __func__);
+		dev_err(&pdev->dev, "%s: unable to get core_clk\n", __func__);
 		rc = PTR_ERR(dd->clk);
 		goto err_probe_clk_get;
 	}
 
 	dd->pclk = clk_get(&pdev->dev, "iface_clk");
 	if (IS_ERR(dd->pclk)) {
-		dev_err(&pdev->dev, "[SPI]%s: unable to get iface_clk\n", __func__);
+		dev_err(&pdev->dev, "%s: unable to get iface_clk\n", __func__);
 		rc = PTR_ERR(dd->pclk);
 		goto err_probe_pclk_get;
 	}
@@ -2379,7 +2378,7 @@ skip_dma_resources:
 
 	rc = clk_enable(dd->clk);
 	if (rc) {
-		dev_err(&pdev->dev, "[SPI]%s: unable to enable core_clk\n",
+		dev_err(&pdev->dev, "%s: unable to enable core_clk\n",
 			__func__);
 		goto err_probe_clk_enable;
 	}
@@ -2387,7 +2386,7 @@ skip_dma_resources:
 
 	rc = clk_enable(dd->pclk);
 	if (rc) {
-		dev_err(&pdev->dev, "[SPI]%s: unable to enable iface_clk\n",
+		dev_err(&pdev->dev, "%s: unable to enable iface_clk\n",
 		__func__);
 		goto err_probe_pclk_enable;
 	}
@@ -2447,7 +2446,7 @@ skip_dma_resources:
 
 	rc = sysfs_create_group(&(dd->dev->kobj), &dev_attr_grp);
 	if (rc) {
-		dev_err(&pdev->dev, "[SPI]failed to create dev. attrs : %d\n", rc);
+		dev_err(&pdev->dev, "failed to create dev. attrs : %d\n", rc);
 		goto err_attrs;
 	}
 
@@ -2503,9 +2502,7 @@ static int msm_spi_suspend(struct platform_device *pdev, pm_message_t state)
 	struct spi_master *master = platform_get_drvdata(pdev);
 	struct msm_spi    *dd;
 	unsigned long      flags;
-	struct msm_spi_platform_data *pdata = pdev->dev.platform_data;
 
-	printk(KERN_INFO "[SPI]%s\n", __func__);
 	if (!master)
 		goto suspend_exit;
 	dd = spi_master_get_devdata(master);
@@ -2519,11 +2516,7 @@ static int msm_spi_suspend(struct platform_device *pdev, pm_message_t state)
 
 	/* Wait for transactions to end, or time out */
 	wait_event_interruptible(dd->continue_suspend, !dd->transfer_pending);
-
 	msm_spi_free_gpios(dd);
-
-	if (pdata && pdata->gpio_release)
-		pdata->gpio_release();
 
 suspend_exit:
 	return 0;
@@ -2533,9 +2526,7 @@ static int msm_spi_resume(struct platform_device *pdev)
 {
 	struct spi_master *master = platform_get_drvdata(pdev);
 	struct msm_spi    *dd;
-	struct msm_spi_platform_data *pdata = pdev->dev.platform_data;
 
-	printk(KERN_INFO "[SPI]%s\n", __func__);
 	if (!master)
 		goto resume_exit;
 	dd = spi_master_get_devdata(master);
@@ -2544,8 +2535,6 @@ static int msm_spi_resume(struct platform_device *pdev)
 
 	BUG_ON(msm_spi_request_gpios(dd) != 0);
 	dd->suspended = 0;
-	if (pdata && pdata->gpio_config)
-		pdata->gpio_config();
 resume_exit:
 	return 0;
 }

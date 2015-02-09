@@ -39,9 +39,6 @@
 #include <mach/msm_smd.h>
 #include <mach/peripheral-loader.h>
 
-/* HTC */
-#define MODULE_NAME "[RMNTSMD] "
-
 /* Debug message support */
 static int msm_rmnet_debug_mask;
 module_param_named(debug_enable, msm_rmnet_debug_mask,
@@ -53,7 +50,7 @@ module_param_named(debug_enable, msm_rmnet_debug_mask,
 
 #define DBG(m, x...) do {			\
 		if (msm_rmnet_debug_mask & m)   \
-			pr_info(MODULE_NAME x);		\
+			pr_info(x);		\
 } while (0)
 #define DBG0(x...) DBG(DEBUG_MASK_LVL0, x)
 #define DBG1(x...) DBG(DEBUG_MASK_LVL1, x)
@@ -252,7 +249,7 @@ static __be16 rmnet_ip_type_trans(struct sk_buff *skb, struct net_device *dev)
 		protocol = htons(ETH_P_IPV6);
 		break;
 	default:
-		pr_err(MODULE_NAME "[%s] rmnet_recv() L3 protocol decode error: 0x%02x",
+		pr_err("[%s] rmnet_recv() L3 protocol decode error: 0x%02x",
 		       dev->name, skb->data[0] & 0xf0);
 		/* skb will be dropped in uppder layer for unknown protocol */
 	}
@@ -330,7 +327,7 @@ static void smd_net_data_handler(unsigned long arg)
 			continue;
 		}
 		if (smd_read(p->ch, ptr, sz) != sz)
-			pr_err(MODULE_NAME "[%s] rmnet_recv() smd lied about avail?!",
+			pr_err("[%s] rmnet_recv() smd lied about avail?!",
 				dev->name);
 	}
 }
@@ -360,7 +357,7 @@ static int _rmnet_xmit(struct sk_buff *skb, struct net_device *dev)
 	dev->trans_start = jiffies;
 	smd_ret = smd_write(ch, skb->data, skb->len);
 	if (smd_ret != skb->len) {
-		pr_err(MODULE_NAME "[%s] %s: smd_write returned error %d",
+		pr_err("[%s] %s: smd_write returned error %d",
 			dev->name, __func__, smd_ret);
 		p->stats.tx_errors++;
 		goto xmit_out;
@@ -417,7 +414,7 @@ static void *msm_rmnet_load_modem(struct net_device *dev)
 
 	pil = pil_get("modem");
 	if (IS_ERR(pil))
-		pr_err(MODULE_NAME "[%s] %s: modem load failed\n",
+		pr_err("[%s] %s: modem load failed\n",
 			dev->name, __func__);
 	else if (msm_rmnet_modem_wait) {
 		rc = wait_for_completion_interruptible_timeout(
@@ -426,7 +423,7 @@ static void *msm_rmnet_load_modem(struct net_device *dev)
 		if (!rc)
 			rc = -ETIMEDOUT;
 		if (rc < 0) {
-			pr_err(MODULE_NAME "[%s] %s: wait for rmnet port failed %d\n",
+			pr_err("[%s] %s: wait for rmnet port failed %d\n",
 			       dev->name, __func__, rc);
 			msm_rmnet_unload_modem(pil);
 			pil = ERR_PTR(rc);
@@ -570,7 +567,7 @@ static int rmnet_xmit(struct sk_buff *skb, struct net_device *dev)
 	unsigned long flags;
 
 	if (netif_queue_stopped(dev)) {
-		pr_err(MODULE_NAME "[%s] fatal: rmnet_xmit called when netif_queue is stopped",
+		pr_err("[%s] fatal: rmnet_xmit called when netif_queue is stopped",
 			dev->name);
 		return 0;
 	}
@@ -603,7 +600,7 @@ static void rmnet_set_multicast_list(struct net_device *dev)
 
 static void rmnet_tx_timeout(struct net_device *dev)
 {
-	pr_warning(MODULE_NAME "[%s] rmnet_tx_timeout()\n", dev->name);
+	pr_warning("[%s] rmnet_tx_timeout()\n", dev->name);
 }
 
 
@@ -728,7 +725,7 @@ static int rmnet_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		break;
 
 	default:
-		pr_err(MODULE_NAME "[%s] error: rmnet_ioct called for unsupported cmd[%d]",
+		pr_err("[%s] error: rmnet_ioct called for unsupported cmd[%d]",
 			dev->name, cmd);
 		return -EINVAL;
 	}
@@ -775,7 +772,7 @@ static int __init rmnet_init(void)
 	struct rmnet_private *p;
 	unsigned n;
 
-	pr_info(MODULE_NAME "%s: SMD devices[%d]\n", __func__, RMNET_DEVICE_COUNT);
+	pr_info("%s: SMD devices[%d]\n", __func__, RMNET_DEVICE_COUNT);
 
 #ifdef CONFIG_MSM_RMNET_DEBUG
 	timeout_us = 0;

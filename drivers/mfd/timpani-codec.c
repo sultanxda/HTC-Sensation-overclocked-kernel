@@ -48,6 +48,7 @@ enum refcnt {
 	IGNORE = 2,
 };
 #define TIMPANI_ARRAY_SIZE	(TIMPANI_A_CDC_COMP_HALT + 1)
+#define MAX_SHADOW_RIGISTERS	TIMPANI_A_CDC_COMP_HALT
 
 static u8 timpani_shadow[TIMPANI_ARRAY_SIZE];
 
@@ -2754,6 +2755,7 @@ static bool timpani_register_is_cacheable(u8 reg)
 	case TIMPANI_A_CDC_ANC2_CTL1:
 	case TIMPANI_A_CDC_ANC2_CTL2:
 	case TIMPANI_A_CDC_ANC2_FF_FB_SHIFT:
+	case TIMPANI_A_AUXPGA_LR_GAIN:
 		return false;
 	default:
 		return true;
@@ -2765,6 +2767,19 @@ static int adie_codec_write(u8 reg, u8 mask, u8 val)
 	int rc = 0;
 	u8 new_val;
 
+	if (reg > MAX_SHADOW_RIGISTERS) {
+		pr_debug("register number is out of bound for shadow"
+					" registers reg = %d\n", reg);
+		new_val = (val & mask);
+		rc = marimba_write_bit_mask(adie_codec.pdrv_ptr, reg,  &new_val,
+			1, 0xFF);
+		if (IS_ERR_VALUE(rc)) {
+			pr_err("%s: fail to write reg %x\n", __func__, reg);
+			rc = -EIO;
+			goto error;
+		}
+		return rc;
+	}
 	new_val = (val & mask) | (timpani_shadow[reg] & ~mask);
 	if (!(timpani_register_is_cacheable(reg) &&
 		(new_val == timpani_shadow[reg]))) {
@@ -2837,29 +2852,6 @@ static int adie_codec_refcnt_write(u8 reg, u8 mask, u8 val, enum refcnt cnt,
 static int adie_codec_read(u8 reg, u8 *val)
 {
 	return marimba_read(adie_codec.pdrv_ptr, reg, val, 1);
-}
-
-static int timpani_adie_set_device_analog_volume(struct adie_codec_path *path_ptr,
-					u32 num_channels, u32 volume)
-{
-	int rc = 0;
-
-	/* This function is not implemented in original codebase */
-	if (path_ptr != NULL)
-		return 0;
-
-	/* To support adjusting analog volume along with Beats effect
-	 * Only do gain changes for headset currently */
-	pr_info("%s, channel = %d, volume = 0x%X\n", __func__, num_channels, volume);
-
-	/* Apply indicated analog gain to left channel */
-	if (num_channels > 0)
-		rc = adie_codec_write(TIMPANI_A_CDC_HPH_L_AVOL, 0xFE, volume);
-	/* Apply indicated analog gain to right channel */
-	if (num_channels > 1)
-		rc = adie_codec_write(TIMPANI_A_CDC_HPH_R_AVOL, 0xFE, volume);
-
-	return rc;
 }
 
 static int timpani_adie_codec_setpath(struct adie_codec_path *path_ptr,
@@ -3431,13 +3423,14 @@ static const struct adie_codec_operations timpani_adie_ops = {
 	.codec_id = TIMPANI_ID,
 	.codec_open = timpani_adie_codec_open,
 	.codec_close = timpani_adie_codec_close,
-	.codec_set_device_analog_volume = timpani_adie_set_device_analog_volume,
 	.codec_setpath = timpani_adie_codec_setpath,
 	.codec_proceed_stage = timpani_adie_codec_proceed_stage,
 	.codec_freq_supported = timpani_adie_codec_freq_supported,
 	.codec_enable_sidetone = timpani_adie_codec_enable_sidetone,
 	.codec_set_master_mode = timpani_adie_codec_set_master_mode,
 	.codec_enable_anc = timpani_adie_codec_enable_anc,
+	.codec_set_device_analog_volume =
+		timpani_adie_codec_set_device_analog_volume,
 	.codec_set_device_digital_volume =
 		timpani_adie_codec_set_device_digital_volume,
 };

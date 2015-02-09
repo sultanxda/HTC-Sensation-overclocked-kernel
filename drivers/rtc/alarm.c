@@ -36,13 +36,6 @@ static int debug_mask = ANDROID_ALARM_PRINT_ERROR | \
 			ANDROID_ALARM_PRINT_INIT_STATUS;
 module_param_named(debug_mask, debug_mask, int, S_IRUGO | S_IWUSR | S_IWGRP);
 
-#define OFFALARM_SIZE	(10)
-
-static int offalarm_size = OFFALARM_SIZE;
-static int offalarm[OFFALARM_SIZE];
-module_param_array_named(offalarm, offalarm, uint, &offalarm_size,
-	S_IRUGO | S_IWUSR);
-
 #define pr_alarm(debug_level_mask, args...) \
 	do { \
 		if (debug_mask & ANDROID_ALARM_PRINT_##debug_level_mask) { \
@@ -74,11 +67,6 @@ static struct wake_lock alarm_rtc_wake_lock;
 static struct platform_device *alarm_platform_dev;
 struct alarm_queue alarms[ANDROID_ALARM_TYPE_COUNT];
 static bool suspended;
-
-
-#ifdef HTC_QUICKBOOT_OFFMODE_ALARM
-int htc_is_offalarm_enabled(void);
-#endif
 
 static void update_timer_locked(struct alarm_queue *base, bool head_removed)
 {
@@ -425,7 +413,7 @@ static int alarm_suspend(struct platform_device *pdev, pm_message_t state)
 
 	hrtimer_cancel(&alarms[ANDROID_ALARM_RTC_WAKEUP].timer);
 	hrtimer_cancel(&alarms[
-			ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP_MASK].timer);
+			ANDROID_ALARM_ELAPSED_REALTIME_WAKEUP].timer);
 
 	tmp_queue = &alarms[ANDROID_ALARM_RTC_WAKEUP];
 	if (tmp_queue->first)
@@ -497,44 +485,6 @@ static int alarm_resume(struct platform_device *pdev)
 	return 0;
 }
 
-#ifdef HTC_QUICKBOOT_OFFMODE_ALARM
-/* return the nearest alarm time */
-static int find_offmode_alarm(void)
-{
-	struct timespec rtc_now;
-	int i;
-	int nearest_alarm = 0;
-
-	getnstimeofday(&rtc_now);
-	for (i = 0; i < offalarm_size; i++) {
-		if (offalarm[i] > rtc_now.tv_sec) {
-			if (nearest_alarm == 0)
-				nearest_alarm = offalarm[i];
-			else if (offalarm[i] < nearest_alarm)
-				nearest_alarm = offalarm[i];
-		}
-	}
-
-	return nearest_alarm;
-}
-
-static void alarm_shutdown(struct platform_device *pdev)
-{
-	int offmode_alarm;
-	struct rtc_wkalrm rtc_alarm;
-
-	if (!htc_is_offalarm_enabled())
-		return;
-
-	offmode_alarm = find_offmode_alarm();
-	if (offmode_alarm > 0) {
-		pr_alarm(FLOW, "set offmode alarm(%u)", offmode_alarm);
-		rtc_time_to_tm(offmode_alarm, &rtc_alarm.time);
-		rtc_alarm.enabled = 1;
-		rtc_set_alarm(alarm_rtc_dev, &rtc_alarm);
-	}
-}
-#endif
 static struct rtc_task alarm_rtc_task = {
 	.func = alarm_triggered_func
 };
@@ -594,9 +544,6 @@ static struct class_interface rtc_alarm_interface = {
 static struct platform_driver alarm_driver = {
 	.suspend = alarm_suspend,
 	.resume = alarm_resume,
-#ifdef HTC_QUICKBOOT_OFFMODE_ALARM
-	.shutdown = alarm_shutdown,
-#endif
 	.driver = {
 		.name = "alarm"
 	}

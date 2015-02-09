@@ -11,7 +11,6 @@ rtc-core-y			:= class.o interface.o
 
 obj-$(CONFIG_RTC_INTF_ALARM) += alarm.o
 obj-$(CONFIG_RTC_INTF_ALARM_DEV) += alarm-dev.o
-obj-$(CONFIG_HTC_QUICKBOOT_OFFMODE_ALARM)      += offmode-alarm.o
 rtc-core-$(CONFIG_RTC_INTF_DEV)	+= rtc-dev.o
 rtc-core-$(CONFIG_RTC_INTF_PROC) += rtc-proc.o
 rtc-core-$(CONFIG_RTC_INTF_SYSFS) += rtc-sysfs.o
@@ -114,4 +113,3 @@ obj-$(CONFIG_RTC_DRV_VT8500)	+= rtc-vt8500.o
 obj-$(CONFIG_RTC_DRV_WM831X)	+= rtc-wm831x.o
 obj-$(CONFIG_RTC_DRV_WM8350)	+= rtc-wm8350.o
 obj-$(CONFIG_RTC_DRV_X1205)	+= rtc-x1205.o
-obj-$(CONFIG_RTC_PM8058)	+= rtc-pm8058.o
