@@ -158,6 +158,7 @@ void pyramid_init_fb(void);
 void pyramid_allocate_fb_region(void);
 void __init pyramid_mdp_writeback(struct memtype_reserve* reserve_table);
 void __init pyramid_init_pmic(void);
+void __init pyramid_gpio_mpp_init(void);
 void __init pyramid_pm8901_gpio_mpp_init(void);
 extern struct pm8901_vreg_pdata pm8901_regulator_pdata[];
 extern int pm8901_regulator_pdata_len;
