@@ -61,6 +61,7 @@
 #include <asm/mach-types.h>
 #include <asm/mach/arch.h>
 #include <asm/setup.h>
+#include <asm/hardware/gic.h>
 
 #include <mach/dma.h>
 #include <mach/mpp.h>
@@ -5811,6 +5812,7 @@ MACHINE_START(PYRAMID, "pyramid")
 	.map_io = pyramid_map_io,
 	.reserve = pyramid_reserve,
 	.init_irq = msm8x60_init_irq,
+	.handle_irq = gic_handle_irq,
 	.init_machine = pyramid_init,
 	.timer = &msm_timer,
 	.init_early = pyramid_charm_init_early,
