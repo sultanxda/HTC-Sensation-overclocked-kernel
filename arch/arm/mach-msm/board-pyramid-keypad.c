@@ -25,7 +25,6 @@
 #include "board-pyramid.h"
 
 #include <linux/mfd/pmic8058.h>
-#include <linux/input/pmic8058-keypad.h>
 
 /* Macros assume PMIC GPIOs start at 0 */
 #define PM8058_GPIO_BASE			NR_MSM_GPIOS
@@ -49,10 +48,6 @@ module_param_named(keycaps, keycaps, charp, 0);
 
 static struct gpio_event_direct_entry pyramid_keypad_input_map[] = {
 	{
-		.gpio = PYRAMID_GPIO_KEY_POWER,
-		.code = KEY_POWER,
-	},
-	{
 		.gpio = PM8058_GPIO_PM_TO_SYS(PYRAMID_VOL_UP),
 		.code = KEY_VOLUMEUP,
 	},
@@ -61,16 +56,6 @@ static struct gpio_event_direct_entry pyramid_keypad_input_map[] = {
 		.code = KEY_VOLUMEDOWN,
 	},
 };
-
-static uint32_t inputs_gpio_table[] = {
-		GPIO_CFG(PYRAMID_GPIO_KEY_POWER, 0, GPIO_CFG_INPUT,
-			 GPIO_CFG_PULL_UP, GPIO_CFG_4MA),
-	};
-
-static void pyramid_setup_input_gpio(void)
-{
-	gpio_tlmm_config(inputs_gpio_table[0], GPIO_CFG_ENABLE);
-}
 
 static struct gpio_event_input_info pyramid_keypad_input_info = {
 	.info.func = gpio_event_input_func,
@@ -83,7 +68,6 @@ static struct gpio_event_input_info pyramid_keypad_input_info = {
 # endif
 	.keymap = pyramid_keypad_input_map,
 	.keymap_size = ARRAY_SIZE(pyramid_keypad_input_map),
-	.setup_input_gpio = pyramid_setup_input_gpio,
 };
 
 static struct gpio_event_info *pyramid_keypad_info[] = {
