@@ -23,11 +23,7 @@
 #include <asm/ioctls.h>
 #include "audio_utils.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
+/* Buffer with meta*/
 #define PCM_BUF_SIZE		(4096 + sizeof(struct meta_in))
 
 #define FRAME_SIZE		(1 + ((61+sizeof(struct meta_out_dsp)) * 10))

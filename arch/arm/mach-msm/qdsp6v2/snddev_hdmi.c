@@ -24,11 +24,6 @@
 #include <sound/apr_audio.h>
 #include "snddev_hdmi.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 static DEFINE_MUTEX(snddev_hdmi_lock);
 static int snddev_hdmi_active;
 

@@ -24,11 +24,6 @@
 #include <sound/apr_audio.h>
 #include <sound/q6afe.h>
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 #define TIMEOUT_MS 1000
 #define AUDIO_RX 0x0
 #define AUDIO_TX 0x1

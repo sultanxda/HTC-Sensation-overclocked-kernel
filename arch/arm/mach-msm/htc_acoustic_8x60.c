@@ -135,7 +135,7 @@ static int is_rpc_connect(void)
 		endpoint = msm_rpc_connect(HTCPROG,
 				HTCVERS, 0);
 		if (IS_ERR(endpoint)) {
-			pr_aud_err("%s: init rpc failed! rc = %ld\n",
+			pr_err("%s: init rpc failed! rc = %ld\n",
 				__func__, PTR_ERR(endpoint));
 			mutex_unlock(&rpc_connect_lock);
 			return -EFAULT;
@@ -206,7 +206,7 @@ acoustic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		if (!support_adie)
 			break;
 
-		pr_aud_info("%s: update adie table\n", __func__);
+		pr_info("%s: update adie table\n", __func__);
 
 		if (copy_from_user(&act_info, (void *)arg,
 			sizeof(struct profile_action_info))) {
@@ -281,7 +281,7 @@ acoustic_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			rc = -EFAULT;
 			break;
 		}
-		pr_aud_info("%s update ACDB ID : (%d, %d, %d, %d)\n",
+		pr_info("%s update ACDB ID : (%d, %d, %d, %d)\n",
 			__func__,
 			cur_acdb_id.tx_dev_id,
 			cur_acdb_id.rx_dev_id,
@@ -657,7 +657,7 @@ static DEVICE_ATTR(sysattr, 0644, attr_show, attr_store);
 
 int enable_mic_bias(int on)
 {
-	pr_aud_info("%s called %d\n", __func__, on);
+	pr_info("%s called %d\n", __func__, on);
 	if (the_ops->enable_mic_bias)
 		the_ops->enable_mic_bias(on, 1);
 
@@ -672,7 +672,7 @@ static int __init acoustic_init(void)
 	mutex_init(&rpc_connect_lock);
 	ret = misc_register(&acoustic_misc);
 	if (ret < 0) {
-		pr_aud_err("failed to register misc device!\n");
+		pr_err("failed to register misc device!\n");
 		return ret;
 	}
 

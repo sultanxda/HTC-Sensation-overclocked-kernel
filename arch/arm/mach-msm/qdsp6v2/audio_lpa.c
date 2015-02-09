@@ -45,11 +45,6 @@
 #include <mach/debug_mm.h>
 #include <linux/fs.h>
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 #define MAX_BUF 4
 #define BUFSZ (524288)
 
@@ -1003,7 +998,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 		if (copy_from_user(&q6_param, (void *) arg,
 					sizeof(q6_param))) {
-			pr_aud_err("%s: copy param from user failed\n",
+			pr_err("%s: copy param from user failed\n",
 				__func__);
 			rc = -EFAULT;
 			goto fail;
@@ -1012,7 +1007,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 		if (q6_param.payload_size <= 0 ||
 		    (q6_param.effect_type != 0 &&
 		     q6_param.effect_type != 1)) {
-			pr_aud_err("%s: unsupported param: %d, 0x%x, 0x%x, %d\n",
+			pr_err("%s: unsupported param: %d, 0x%x, 0x%x, %d\n",
 				__func__, q6_param.effect_type,
 				q6_param.module_id, q6_param.param_id,
 				q6_param.payload_size);
@@ -1022,14 +1017,14 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 
 		payload = kzalloc(q6_param.payload_size, GFP_KERNEL);
 		if (!payload) {
-			pr_aud_err("%s: failed to allocate memory\n",
+			pr_err("%s: failed to allocate memory\n",
 				__func__);
 			rc = -ENOMEM;
 			break;
 		}
 		if (copy_from_user(payload, (void *) (arg + sizeof(q6_param)),
 			q6_param.payload_size)) {
-			pr_aud_err("%s: copy payload from user failed\n",
+			pr_err("%s: copy payload from user failed\n",
 				__func__);
 			kfree(payload);
 			rc = -EFAULT;
@@ -1049,7 +1044,7 @@ static long audio_ioctl(struct file *file, unsigned int cmd, unsigned long arg)
 			int i;
 			ptr = (int *)payload;
 			for (i = 0; i < (q6_param.payload_size / 4); i++)
-				pr_aud_info("0x%08x", *(ptr + i));
+				pr_info("0x%08x", *(ptr + i));
 		}
 #endif
 		kfree(payload);

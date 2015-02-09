@@ -24,16 +24,13 @@
 #include <sound/apr_audio.h>
 #include "snddev_mi2s.h"
 
-#define SNDDEV_MI2S_PCM_SZ 32 
-#define SNDDEV_MI2S_MUL_FACTOR 3 
+#define SNDDEV_MI2S_PCM_SZ 32 /* 16 bit / sample stereo mode */
+#define SNDDEV_MI2S_MUL_FACTOR 3 /* Multi by 8 Shift by 3  */
 #define SNDDEV_MI2S_CLK_RATE(freq) \
 	(((freq) * (SNDDEV_MI2S_PCM_SZ)) << (SNDDEV_MI2S_MUL_FACTOR))
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
 
+/* Global state for the driver */
 struct snddev_mi2s_drv_state {
 
 	struct clk *tx_osrclk;
@@ -102,7 +99,7 @@ static int mi2s_get_gpios(struct platform_device *pdev)
 	int rc = 0;
 	struct resource *res;
 
-	
+	/* Claim all of the GPIOs. */
 	res = platform_get_resource_byname(pdev, IORESOURCE_IO, "mi2s_ws");
 	if (!res) {
 		pr_err("%s: failed to get gpio MI2S_WS\n", __func__);

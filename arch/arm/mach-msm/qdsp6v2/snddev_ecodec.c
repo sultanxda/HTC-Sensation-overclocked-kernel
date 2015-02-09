@@ -28,11 +28,6 @@
 
 #define ECODEC_SAMPLE_RATE 8000
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 struct snddev_ecodec_state {
 	struct snddev_ecodec_data *data;
 	u32 sample_rate;
@@ -131,7 +126,7 @@ static int get_aux_pcm_gpios(struct platform_device *pdev)
 
 	the_aux_pcm_state.clkin_a = res->start;
 
-	pr_aud_info("%s: dout = %u, din = %u , syncout = %u, clkin_a =%u\n",
+	pr_info("%s: dout = %u, din = %u , syncout = %u, clkin_a =%u\n",
 		__func__, the_aux_pcm_state.dout, the_aux_pcm_state.din,
 		the_aux_pcm_state.syncout, the_aux_pcm_state.clkin_a);
 
@@ -142,7 +137,7 @@ static int aux_pcm_probe(struct platform_device *pdev)
 {
 	int rc = 0;
 
-	pr_aud_info("%s:\n", __func__);
+	pr_info("%s:\n", __func__);
 	rc = get_aux_pcm_gpios(pdev);
 	if (rc < 0) {
 		pr_err("%s: GPIO configuration failed\n", __func__);
@@ -288,7 +283,7 @@ static int snddev_ecodec_probe(struct platform_device *pdev)
 	struct msm_snddev_info *dev_info;
 	struct snddev_ecodec_state *ecodec;
 
-	pr_aud_info("%s:\n", __func__);
+	pr_info("%s:\n", __func__);
 
 	if (!pdev || !pdev->dev.platform_data) {
 		printk(KERN_ALERT "Invalid caller\n");
@@ -338,7 +333,7 @@ int __init snddev_ecodec_init(void)
 	int rc = 0;
 	struct snddev_ecodec_drv_state *drv = &snddev_ecodec_drv;
 
-	pr_aud_info("%s:\n", __func__);
+	pr_info("%s:\n", __func__);
 
 	mutex_init(&drv->dev_lock);
 	drv->ref_cnt = 0;
@@ -363,7 +358,7 @@ int __init snddev_ecodec_init(void)
 		goto error_ecodec_platform_driver;
 	}
 
-	pr_aud_info("%s: done\n", __func__);
+	pr_info("%s: done\n", __func__);
 
 	return 0;
 

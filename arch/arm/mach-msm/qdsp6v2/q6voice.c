@@ -48,11 +48,6 @@
 
 #define VOC_REC_NONE 0xFF
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 struct common_data common;
 
 static bool is_adsp_support_cvd(void)

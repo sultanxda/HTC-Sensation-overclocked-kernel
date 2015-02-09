@@ -518,7 +518,7 @@ static inline void __free_one_page(struct page *page,
 	unsigned long page_idx;
 	unsigned long combined_idx;
 	unsigned long uninitialized_var(buddy_idx);
-	struct page *buddy;
+	struct page *buddy = NULL;
 
 	if (unlikely(PageCompound(page)))
 		if (unlikely(destroy_compound_page(page, order)))
@@ -1708,7 +1708,6 @@ zonelist_scan:
 				continue;
 
 		BUILD_BUG_ON(ALLOC_NO_WATERMARKS < NR_WMARK);
-		BUG_ON((alloc_flags & ALLOC_WMARK_MASK) == (ALLOC_WMARK_LOW | ALLOC_WMARK_HIGH));
 		if (!(alloc_flags & ALLOC_NO_WATERMARKS)) {
 			unsigned long mark;
 			int ret;

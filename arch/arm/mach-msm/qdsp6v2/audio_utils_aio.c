@@ -26,11 +26,6 @@
 #include <linux/debugfs.h>
 #include "audio_utils_aio.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 #ifdef CONFIG_ARCH_MSM8X60
 #include <mach/qdsp6v2/audio_dev_ctl.h>
 #endif 

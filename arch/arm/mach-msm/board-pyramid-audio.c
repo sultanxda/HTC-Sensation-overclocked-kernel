@@ -56,7 +56,7 @@ static atomic_t aic3254_ctl = ATOMIC_INIT(0);
 
 void pyramid_snddev_poweramp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	if (en) {
 		msleep(50);
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), 1);
@@ -73,7 +73,7 @@ void pyramid_snddev_poweramp_on(int en)
 
 void pyramid_snddev_usb_headset_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	if (en) {
 	} else {
 	}
@@ -82,7 +82,7 @@ void pyramid_snddev_usb_headset_pamp_on(int en)
 
 void pyramid_snddev_hsed_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	if (en) {
 		msleep(50);
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), 1);
@@ -99,7 +99,7 @@ void pyramid_snddev_hsed_pamp_on(int en)
 
 void pyramid_snddev_hs_spk_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	if (en) {
 		msleep(50);
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), 1);
@@ -120,7 +120,7 @@ void pyramid_snddev_hs_spk_pamp_on(int en)
 
 void pyramid_snddev_receiver_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	if (en) {
 		if (!atomic_read(&aic3254_ctl))
 			curr_rx_mode |= BIT_RECEIVER;
@@ -132,7 +132,7 @@ void pyramid_snddev_receiver_pamp_on(int en)
 
 void pyramid_mic_enable(int en, int shift)
 {
-	pr_aud_info("%s: %d, shift %d\n", __func__, en, shift);
+	pr_info("%s: %d, shift %d\n", __func__, en, shift);
 
 	mutex_lock(&mic_lock);
 
@@ -148,19 +148,19 @@ void pyramid_snddev_imic_pamp_on(int en)
 {
 	int ret;
 
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 	
 	pyramid_snddev_bmic_pamp_on(en);
 	
 	if (en) {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
-			pr_aud_err("%s: Enabling int mic power failed\n", __func__);
+			pr_err("%s: Enabling int mic power failed\n", __func__);
 
 	} else {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_OFF);
 		if (ret)
-			pr_aud_err("%s: Enabling int mic power failed\n", __func__);
+			pr_err("%s: Enabling int mic power failed\n", __func__);
 
 	}
 }
@@ -169,17 +169,17 @@ void pyramid_snddev_bmic_pamp_on(int en)
 {
 	int ret;
 
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 
 	if (en) {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_1, OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
-			pr_aud_err("%s: Enabling back mic power failed\n", __func__);
+			pr_err("%s: Enabling back mic power failed\n", __func__);
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_MIC_SEL), 0);
 	} else {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_1, OTHC_SIGNAL_OFF);
 		if (ret)
-			pr_aud_err("%s: Enabling back mic power failed\n", __func__);
+			pr_err("%s: Enabling back mic power failed\n", __func__);
 	}
 }
 
@@ -187,32 +187,32 @@ void pyramid_snddev_stereo_mic_pamp_on(int en)
 {
 	int ret;
 
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 
 	if (en) {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
-			pr_aud_err("%s: Enabling int mic power failed\n", __func__);
+			pr_err("%s: Enabling int mic power failed\n", __func__);
 
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_1, OTHC_SIGNAL_ALWAYS_ON);
 		if (ret)
-			pr_aud_err("%s: Enabling back mic power failed\n", __func__);
+			pr_err("%s: Enabling back mic power failed\n", __func__);
 
 		gpio_set_value(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_MIC_SEL), 0);
 	} else {
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_0, OTHC_SIGNAL_OFF);
 		if (ret)
-			pr_aud_err("%s: Disabling int mic power failed\n", __func__);
+			pr_err("%s: Disabling int mic power failed\n", __func__);
 
 		ret = pm8058_micbias_enable(OTHC_MICBIAS_1, OTHC_SIGNAL_OFF);
 		if (ret)
-			pr_aud_err("%s: Disabling back mic power failed\n", __func__);
+			pr_err("%s: Disabling back mic power failed\n", __func__);
 	}
 }
 
 void pyramid_snddev_emic_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 
 	if (en) {
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_MIC_SEL), 1);
@@ -221,7 +221,7 @@ void pyramid_snddev_emic_pamp_on(int en)
 
 void pyramid_snddev_fmspk_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 
 	if (en) {
 		gpio_direction_output(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), 1);
@@ -238,7 +238,7 @@ void pyramid_snddev_fmspk_pamp_on(int en)
 
 void pyramid_snddev_fmhs_pamp_on(int en)
 {
-	pr_aud_info("%s %d\n", __func__, en);
+	pr_info("%s %d\n", __func__, en);
 
 	if (en) {
 		gpio_set_value(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), 1);
@@ -261,7 +261,7 @@ void pyramid_rx_amp_enable(int en)
 {
 	if (curr_rx_mode != 0) {
 		atomic_set(&aic3254_ctl, 1);
-		pr_aud_info("%s: curr_rx_mode 0x%x, en %d\n",
+		pr_info("%s: curr_rx_mode 0x%x, en %d\n",
 			__func__, curr_rx_mode, en);
 		if (curr_rx_mode & BIT_SPEAKER)
 			pyramid_snddev_poweramp_on(en);
@@ -309,7 +309,7 @@ void pyramid_get_acoustic_tables(struct acoustic_tables *tb)
 
 void pyramid_enable_beats(int en)
 {
-	pr_aud_info("%s: %d\n", __func__, en);
+	pr_info("%s: %d\n", __func__, en);
 }
 
 void pyramid_reset_3254(void)
@@ -322,14 +322,14 @@ void pyramid_reset_3254(void)
 
 void pyramid_set_q6_effect_mode(int mode)
 {
-	pr_aud_info("%s: mode %d\n", __func__, mode);
+	pr_info("%s: mode %d\n", __func__, mode);
 	atomic_set(&q6_effect_mode, mode);
 }
 
 int pyramid_get_q6_effect_mode(void)
 {
 	int mode = atomic_read(&q6_effect_mode);
-	pr_aud_info("%s: mode %d\n", __func__, mode);
+	pr_info("%s: mode %d\n", __func__, mode);
 	return mode;
 }
 
@@ -380,7 +380,7 @@ static struct q6asm_ops qops = {
 
 void pyramid_audio_gpios_init(void)
 {
-	pr_aud_info("%s\n", __func__);
+	pr_info("%s\n", __func__);
 	gpio_request(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_HP_EN), "AUD_HP_EN");
 	gpio_request(PM8058_GPIO_PM_TO_SYS(PYRAMID_AUD_MIC_SEL), "AUD_MIC_SEL");
 }
@@ -389,7 +389,7 @@ void __init pyramid_audio_init(void)
 {
 	mutex_init(&mic_lock);
 
-	pr_aud_info("%s\n", __func__);
+	pr_info("%s\n", __func__);
 	htc_8x60_register_analog_ops(&ops);
 	htc_register_q6asm_ops(&qops);
 	acoustic_register_ops(&acoustic);

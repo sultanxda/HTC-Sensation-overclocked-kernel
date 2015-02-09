@@ -43,11 +43,6 @@
 #define SNDDEV_VREG_LOW_POWER_LOAD (36000)
 #define SNDDEV_VREG_HIGH_POWER_LOAD (56000)
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 static bool msm_codec_i2s_slave_mode = 1;
 
 static struct q6v2audio_aic3254_ops default_aic3254_ops;
@@ -774,7 +769,7 @@ int update_aic3254_info(struct aic3254_info *info)
 			struct snddev_icodec_state *icodec;
 			icodec = dev_info->private_data;
 			icodec->data->aic3254_id = info->path_id;
-			pr_aud_info("%s: update aic3254 id of device %s as %d\n",
+			pr_info("%s: update aic3254 id of device %s as %d\n",
 				__func__, dev_info->name, icodec->data->aic3254_id);
 		}
 	}

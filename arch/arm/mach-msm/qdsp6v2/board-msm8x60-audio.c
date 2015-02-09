@@ -35,11 +35,6 @@
 #include <linux/spi/spi_aic3254.h>
 #include "snddev_virtual.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 static struct q6v2audio_analog_ops default_audio_ops;
 static struct q6v2audio_analog_ops *audio_ops = &default_audio_ops;
 
@@ -212,7 +207,7 @@ static int msm_snddev_enable_dmic_power(void)
 {
 	int ret;
 
-	pr_aud_err("%s", __func__);
+	pr_err("%s", __func__);
 	s3 = regulator_get(NULL, "8058_s3");
 	if (IS_ERR(s3)) {
 		ret = -EBUSY;
@@ -259,7 +254,7 @@ static void msm_snddev_disable_dmic_power(void)
 {
 	int ret;
 
-	pr_aud_err("%s", __func__);
+	pr_err("%s", __func__);
 	if (mvs) {
 		ret = regulator_disable(mvs);
 		if (ret < 0)
@@ -371,7 +366,7 @@ static int msm_snddev_enable_dmic_sec_power(void)
 {
 	int ret;
 
-	pr_aud_err("%s", __func__);
+	pr_err("%s", __func__);
 	ret = msm_snddev_enable_dmic_power();
 	if (ret) {
 		pr_err("%s: Error: Enabling dmic power failed\n", __func__);
@@ -390,7 +385,7 @@ static int msm_snddev_enable_dmic_sec_power(void)
 
 static void msm_snddev_disable_dmic_sec_power(void)
 {
-	pr_aud_err("%s", __func__);
+	pr_err("%s", __func__);
 	msm_snddev_disable_dmic_power();
 
 #ifdef CONFIG_PMIC8058_OTHC

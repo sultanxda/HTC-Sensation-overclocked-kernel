@@ -23,11 +23,6 @@
 #include <asm/ioctls.h>
 #include "audio_utils.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 static int audio_in_pause(struct q6audio_in  *audio)
 {
 	int rc;

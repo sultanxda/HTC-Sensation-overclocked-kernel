@@ -28,11 +28,6 @@
 #include <mach/qdsp6v2/apr.h>
 #include "q6core.h"
 
-#undef pr_info
-#undef pr_err
-#define pr_info(fmt, ...) pr_aud_info(fmt, ##__VA_ARGS__)
-#define pr_err(fmt, ...) pr_aud_err(fmt, ##__VA_ARGS__)
-
 #define TIMEOUT_MS 1000
 
 static struct apr_svc *apr_handle_q;
