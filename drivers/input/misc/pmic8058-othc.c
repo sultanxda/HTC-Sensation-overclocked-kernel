@@ -145,7 +145,7 @@ int pm8058_micbias_enable(enum othc_micbias micbias,
 	}
 
 	if (dd->othc_pdata->micbias_capability != OTHC_MICBIAS) {
-		pr_warning("MIC_BIAS enable capability not supported\n");
+		pr_err("MIC_BIAS enable capability not supported\n");
 		return -EINVAL;
 	}
 
@@ -536,19 +536,11 @@ static void detect_work_f(struct work_struct *work)
 	struct pm8058_othc *dd =
 		container_of(work, struct pm8058_othc, detect_work.work);
 
-	if (dd->othc_ir_state) {
-		/* inserted */
-		rc = pm8058_accessory_report(dd, 1);
-		if (rc)
-			pr_err("Accessory could not be detected\n");
-	} else {
-		/* removed */
-		rc = pm8058_accessory_report(dd, 0);
-		if (rc)
-			pr_err("Accessory could not be detected\n");
-		/* Clear existing switch state */
-		dd->othc_sw_state = false;
-	}
+	/* Accessory has been inserted */
+	rc = pm8058_accessory_report(dd, 1);
+	if (rc)
+		pr_err("Accessory insertion could not be detected\n");
+
 	enable_irq(dd->othc_irq_ir);
 }
 
@@ -583,7 +575,6 @@ static irqreturn_t pm8058_no_sw(int irq, void *dev_id)
 	}
 
 	if (dd->othc_support_n_switch == true) {
-#if 0 /* Headset and button detection */
 		if (level == 0) {
 			dd->othc_sw_state = false;
 			input_report_key(dd->othc_ipd, dd->sw_key_code, 0);
@@ -592,7 +583,6 @@ static irqreturn_t pm8058_no_sw(int irq, void *dev_id)
 			disable_irq_nosync(dd->othc_irq_sw);
 			schedule_work(&dd->switch_work);
 		}
-#endif  /* Headset and button detection */
 		return IRQ_HANDLED;
 	}
 	/*
@@ -623,8 +613,7 @@ static irqreturn_t pm8058_no_sw(int irq, void *dev_id)
  */
 static irqreturn_t pm8058_nc_ir(int irq, void *dev_id)
 {
-	int rc = 0;
-	unsigned long flags;
+	unsigned long flags, rc;
 	struct pm8058_othc *dd = dev_id;
 
 	spin_lock_irqsave(&dd->lock, flags);
@@ -640,8 +629,6 @@ static irqreturn_t pm8058_nc_ir(int irq, void *dev_id)
 		ktime_set((dd->switch_debounce_ms / 1000),
 		(dd->switch_debounce_ms % 1000) * 1000000), HRTIMER_MODE_REL);
 
-	/* disable irq, this gets enabled in the workqueue */
-	disable_irq_nosync(dd->othc_irq_ir);
 
 	/* Check the MIC_BIAS status, to check if inserted or removed */
 	rc = pm8xxx_read_irq_stat(dd->dev->parent, dd->othc_irq_ir);
@@ -651,8 +638,20 @@ static irqreturn_t pm8058_nc_ir(int irq, void *dev_id)
 	}
 
 	dd->othc_ir_state = rc;
-	schedule_delayed_work(&dd->detect_work,
+	if (dd->othc_ir_state) {
+		/* disable irq, this gets enabled in the workqueue */
+		disable_irq_nosync(dd->othc_irq_ir);
+		/* Accessory has been inserted, report with detection delay */
+		schedule_delayed_work(&dd->detect_work,
 				msecs_to_jiffies(dd->detection_delay_ms));
+	} else {
+		/* Accessory has been removed, report removal immediately */
+		rc = pm8058_accessory_report(dd, 0);
+		if (rc)
+			pr_err("Accessory removal could not be detected\n");
+		/* Clear existing switch state */
+		dd->othc_sw_state = false;
+	}
 
 fail_ir:
 	return IRQ_HANDLED;
@@ -886,7 +885,7 @@ othc_configure_hsed(struct pm8058_othc *dd, struct platform_device *pd)
 	struct pmic8058_othc_config_pdata *pdata = pd->dev.platform_data;
 	struct othc_hsed_config *hsed_config = pdata->hsed_config;
 
-	dd->othc_sdev.name = "pm8058-h2w";
+	dd->othc_sdev.name = "h2w";
 	dd->othc_sdev.print_name = othc_headset_print_name;
 
 	rc = switch_dev_register(&dd->othc_sdev);
@@ -969,13 +968,6 @@ othc_configure_hsed(struct pm8058_othc *dd, struct platform_device *pd)
 	hrtimer_init(&dd->timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	dd->timer.function = pm8058_othc_timer;
 
-	INIT_DELAYED_WORK(&dd->detect_work, detect_work_f);
-
-	INIT_DELAYED_WORK(&dd->hs_work, hs_worker);
-
-	if (dd->othc_support_n_switch == true)
-		INIT_WORK(&dd->switch_work, switch_work_f);
-
 	/* Request the HEADSET IR interrupt */
 	if (dd->ir_gpio < 0) {
 		rc = request_threaded_irq(dd->othc_irq_ir, NULL, pm8058_nc_ir,
@@ -1039,6 +1031,14 @@ othc_configure_hsed(struct pm8058_othc *dd, struct platform_device *pd)
 
 	device_init_wakeup(&pd->dev,
 			hsed_config->hsed_bias_config->othc_wakeup);
+
+	INIT_DELAYED_WORK(&dd->detect_work, detect_work_f);
+
+	INIT_DELAYED_WORK(&dd->hs_work, hs_worker);
+
+	if (dd->othc_support_n_switch == true)
+		INIT_WORK(&dd->switch_work, switch_work_f);
+
 
 	return 0;
 

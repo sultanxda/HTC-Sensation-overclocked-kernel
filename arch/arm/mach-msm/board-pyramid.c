@@ -5559,7 +5559,6 @@ static struct msm_rpm_platform_data msm_rpm_data = {
 		[MSM_RPM_PAGE_CTRL] = MSM_RPM_BASE + 0x400,
 		[MSM_RPM_PAGE_REQ] = MSM_RPM_BASE + 0x600,
 		[MSM_RPM_PAGE_ACK] = MSM_RPM_BASE + 0xa00,
-		[MSM_RPM_PAGE_STAT] = MSM_RPM_BASE + 0x3E04,
 	},
 
 	.irq_ack = RPM_SCSS_CPU0_GP_HIGH_IRQ,
