@@ -23,7 +23,6 @@
 #include <mach/panel_id.h>
 #include <mach/msm_bus_board.h>
 #include <linux/bootmem.h>
-#include <mach/debug_display.h>
 
 #include "devices.h"
 #include "board-pyramid.h"
@@ -1096,33 +1095,33 @@ int mipi_dsi_panel_power(const int on)
 	if (!dsi_power_on) {
 		l1_3v = regulator_get(NULL, "8901_l1");
 		if (IS_ERR_OR_NULL(l1_3v)) {
-			PR_DISP_ERR("%s: unable to get 8901_l1\n", __func__);
+			pr_err("%s: unable to get 8901_l1\n", __func__);
 			return -ENODEV;
 		}
 		if (system_rev >= 1) {
 			l4_1v8 = regulator_get(NULL, "8901_l4");
 			if (IS_ERR_OR_NULL(l4_1v8)) {
-				PR_DISP_ERR("%s: unable to get 8901_l4\n", __func__);
+				pr_err("%s: unable to get 8901_l4\n", __func__);
 				return -ENODEV;
 			}
 		} else {
 			lvs1_1v8 = regulator_get(NULL, "8901_lvs1");
 			if (IS_ERR_OR_NULL(lvs1_1v8)) {
-				PR_DISP_ERR("%s: unable to get 8901_lvs1\n", __func__);
+				pr_err("%s: unable to get 8901_lvs1\n", __func__);
 				return -ENODEV;
 			}
 		}
 
 		rc = regulator_set_voltage(l1_3v, 3100000, 3100000);
 		if (rc) {
-			PR_DISP_ERR("%s: error setting l1_3v voltage\n", __func__);
+			pr_err("%s: error setting l1_3v voltage\n", __func__);
 			return -EINVAL;
 		}
 
 		if (system_rev >= 1) {
 			rc = regulator_set_voltage(l4_1v8, 1800000, 1800000);
 			if (rc) {
-				PR_DISP_ERR("%s: error setting l4_1v8 voltage\n", __func__);
+				pr_err("%s: error setting l4_1v8 voltage\n", __func__);
 				return -EINVAL;
 			}
 		}
@@ -1153,25 +1152,25 @@ int mipi_dsi_panel_power(const int on)
 	}
 
 	if (!l1_3v || IS_ERR(l1_3v)) {
-		PR_DISP_ERR("%s: l1_3v is not initialized\n", __func__);
+		pr_err("%s: l1_3v is not initialized\n", __func__);
 		return -ENODEV;
 	}
 
 	if (system_rev >= 1) {
 		if (!l4_1v8 || IS_ERR(l4_1v8)) {
-			PR_DISP_ERR("%s: l4_1v8 is not initialized\n", __func__);
+			pr_err("%s: l4_1v8 is not initialized\n", __func__);
 			return -ENODEV;
 		}
 	} else {
 		if (!lvs1_1v8 || IS_ERR(lvs1_1v8)) {
-			PR_DISP_ERR("%s: lvs1_1v8 is not initialized\n", __func__);
+			pr_err("%s: lvs1_1v8 is not initialized\n", __func__);
 			return -ENODEV;
 		}
 	}
 
 	if (on) {
 		if (regulator_enable(l1_3v)) {
-			PR_DISP_ERR("%s: Unable to enable the regulator:"
+			pr_err("%s: Unable to enable the regulator:"
 					" l1_3v\n", __func__);
 			return -ENODEV;
 		}
@@ -1179,13 +1178,13 @@ int mipi_dsi_panel_power(const int on)
 
 		if (system_rev >= 1) {
 			if (regulator_enable(l4_1v8)) {
-				PR_DISP_ERR("%s: Unable to enable the regulator:"
+				pr_err("%s: Unable to enable the regulator:"
 						" l4_1v8\n", __func__);
 				return -ENODEV;
 			}
 		} else {
 			if (regulator_enable(lvs1_1v8)) {
-				PR_DISP_ERR("%s: Unable to enable the regulator:"
+				pr_err("%s: Unable to enable the regulator:"
 						" lvs1_1v8\n", __func__);
 				return -ENODEV;
 			}
@@ -1205,20 +1204,20 @@ int mipi_dsi_panel_power(const int on)
 		msleep(5);
 		if (system_rev >= 1) {
 			if (regulator_disable(l4_1v8)) {
-				PR_DISP_ERR("%s: Unable to enable the regulator:"
+				pr_err("%s: Unable to enable the regulator:"
 						" l4_1v8\n", __func__);
 				return -ENODEV;
 			}
 		} else {
 			if (regulator_disable(lvs1_1v8)) {
-				PR_DISP_ERR("%s: Unable to enable the regulator:"
+				pr_err("%s: Unable to enable the regulator:"
 						" lvs1_1v8\n", __func__);
 				return -ENODEV;
 			}
 		}
 		msleep(5);
 		if (regulator_disable(l1_3v)) {
-			PR_DISP_ERR("%s: Unable to enable the regulator:"
+			pr_err("%s: Unable to enable the regulator:"
 					" l1_3v\n", __func__);
 			return -ENODEV;
 		}
@@ -1845,13 +1844,13 @@ static int mipi_pyramid_device_register(const char* dev_name, struct msm_panel_i
 	ret = platform_device_add_data(pdev, &pyramid_panel_data,
 		sizeof(pyramid_panel_data));
 	if (ret) {
-		PR_DISP_ERR("%s: platform_device_add_data failed!\n", __func__);
+		pr_err("%s: platform_device_add_data failed!\n", __func__);
 		goto err_device_put;
 	}
 
 	ret = platform_device_add(pdev);
 	if (ret) {
-		PR_DISP_ERR("%s: platform_device_register failed!\n", __func__);
+		pr_err("%s: platform_device_register failed!\n", __func__);
 		goto err_device_put;
 	}
 
@@ -1923,7 +1922,7 @@ static int __init mipi_cmd_novatek_blue_qhd_pt_init(void)
 	ret = mipi_pyramid_device_register("mipi_novatek", &pinfo, MIPI_DSI_PRIM,
 						MIPI_DSI_PANEL_QHD_PT);
 	if (ret)
-		PR_DISP_ERR("%s: failed to register device!\n", __func__);
+		pr_err("%s: failed to register device!\n", __func__);
 
 	return ret;
 }
@@ -1949,15 +1948,15 @@ static int __init pyramid_panel_init(void)
 
 	switch (panel_type) {
 		case PANEL_ID_PYD_SHARP:
-			PR_DISP_INFO("%s: panel ID = PANEL_ID_PYD_SHARP\n", __func__);
+			pr_info("%s: panel ID = PANEL_ID_PYD_SHARP\n", __func__);
 			mipi_cmd_novatek_blue_qhd_pt_init();
 			break;
 		case PANEL_ID_PYD_AUO_NT:
-			PR_DISP_INFO("%s: panel ID = PANEL_ID_PYD_AUO_NT\n", __func__);
+			pr_info("%s: panel ID = PANEL_ID_PYD_AUO_NT\n", __func__);
 			mipi_cmd_novatek_blue_qhd_pt_init();
 			break;
 		default:
-			PR_DISP_ERR("%s: panel not supported!\n", __func__);
+			pr_err("%s: panel not supported!\n", __func__);
 			return -ENODEV;
 	}
 

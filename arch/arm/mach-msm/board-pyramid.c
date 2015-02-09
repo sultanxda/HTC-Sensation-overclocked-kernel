@@ -45,7 +45,6 @@
 #include <linux/dma-mapping.h>
 #include <linux/i2c/bq27520.h>
 #include <linux/cy8c_tma_ts.h>
-#include "sysinfo-8x60.h"
 
 #ifdef CONFIG_ION_MSM
 #include <linux/msm_ion.h>
