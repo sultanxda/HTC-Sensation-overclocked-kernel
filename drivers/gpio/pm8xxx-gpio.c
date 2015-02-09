@@ -302,7 +302,7 @@ static int __devinit pm_gpio_probe(struct platform_device *pdev)
 	pm_gpio_chip->gpio_chip.set = pm_gpio_write;
 	pm_gpio_chip->gpio_chip.dbg_show = pm_gpio_dbg_show;
 	pm_gpio_chip->gpio_chip.ngpio = pdata->gpio_cdata.ngpios;
-	pm_gpio_chip->gpio_chip.can_sleep = 0; /* Fix me */
+	pm_gpio_chip->gpio_chip.can_sleep = 1;
 	pm_gpio_chip->gpio_chip.dev = &pdev->dev;
 	pm_gpio_chip->gpio_chip.base = pdata->gpio_base;
 	pm_gpio_chip->irq_base = platform_get_irq(pdev, 0);
@@ -433,90 +433,6 @@ int pm8xxx_gpio_config(int gpio, struct pm_gpio *param)
 	return rc;
 }
 EXPORT_SYMBOL(pm8xxx_gpio_config);
-
-
-int pm8xxx_dump_gpios(struct seq_file *m, int curr_len, char *gpio_buffer)
-{
-	int i, gpio;
-	int len;
-	int rc = -EINVAL;
-	u8 bank[PM_GPIO_BANKS];
-	int val = -1;
-	int mode;
-	char read_buf[128];
-	char *title_msg = "---------- PM8xxx GPIO ---------";
-	struct pm_gpio_chip *pm_gpio_chip;
-	struct gpio_chip *gpio_chip;
-
-	mutex_lock(&pm_gpio_chips_lock);
-	list_for_each_entry(pm_gpio_chip, &pm_gpio_chips, link) {
-		gpio_chip = &pm_gpio_chip->gpio_chip;
-
-		if (m) {
-			seq_printf(m, "%s\n", title_msg);
-		} else {
-			pr_info("%s\n", title_msg);
-			curr_len += sprintf(gpio_buffer + curr_len,
-			"%s\n", title_msg);
-		}
-
-		for (gpio = 0; gpio < gpio_chip->ngpio; gpio++) {
-			memset(read_buf, 0, sizeof(read_buf));
-			len = 0;
-
-			for (i = 0; i < PM_GPIO_BANKS; i++) {
-				bank[i] = i << PM_GPIO_BANK_SHIFT;
-				rc = pm8xxx_writeb(gpio_chip->dev->parent,
-						SSBI_REG_ADDR_GPIO(gpio),
-						bank[i]);
-				if (rc)
-					pr_err("pmic failed to read bank %d\n", i);
-				rc = pm8xxx_readb(gpio_chip->dev->parent,
-						SSBI_REG_ADDR_GPIO(gpio),
-						&bank[i]);
-				if (rc)
-					pr_err("pmic failed to read bank %d\n", i);
-			}
-			len += sprintf(read_buf + len, "GPIO[%2d]: ", gpio+1);
-
-			val = pm_gpio_get(pm_gpio_chip, gpio);
-
-			/* print the mode and the value */
-			mode = (bank[1] & PM_GPIO_MODE_MASK) >>
-					PM_GPIO_MODE_SHIFT;
-			if (mode == PM_GPIO_MODE_BOTH)
-				len += sprintf(read_buf + len, "[DIR]BOTH, [VAL]%s, ",
-				val ? "HIGH" : " LOW");
-			else if (mode == PM_GPIO_MODE_INPUT)
-				len += sprintf(read_buf + len, "[DIR]  IN, [VAL]%s, ",
-				val? "HIGH" : " LOW");
-			else if (mode == PM_GPIO_MODE_OUTPUT)
-				len += sprintf(read_buf + len, "[DIR] OUT, [VAL]%s, ",
-				val? "HIGH" : " LOW");
-			else
-				len += sprintf(read_buf + len, "[DIR] OFF, [VAL]%s, ",
-				val? "HIGH" : " LOW");
-
-			/* print the control register values */
-			len += sprintf(read_buf + len,
-			"[BANK][0x%02x 0x%02x 0x%02x 0x%02x 0x%02x 0x%02x]",
-			bank[0], bank[1], bank[2], bank[3], bank[4], bank[5]);
-
-			read_buf[127] = '\0';
-			if (m) {
-				seq_printf(m, "%s\n", read_buf);
-			} else {
-				pr_info("%s\n", read_buf);
-				curr_len += sprintf(gpio_buffer +
-				curr_len, "%s\n", read_buf);
-			}
-
-		}
-	}
-	mutex_unlock(&pm_gpio_chips_lock);
-	return curr_len;
-}
-EXPORT_SYMBOL_GPL(pm8xxx_dump_gpios);
 
 static struct platform_driver pm_gpio_driver = {
 	.probe		= pm_gpio_probe,

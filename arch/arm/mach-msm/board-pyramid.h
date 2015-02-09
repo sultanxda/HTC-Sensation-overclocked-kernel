@@ -23,8 +23,8 @@
 #include <mach/msm_memtypes.h>
 #include <mach/board-msm8660.h>
 
-#define MSM_RAM_CONSOLE_BASE	MSM_HTC_RAM_CONSOLE_PHYS
-#define MSM_RAM_CONSOLE_SIZE	MSM_HTC_RAM_CONSOLE_SIZE
+#define MSM_RAM_CONSOLE_BASE	0x46400000
+#define MSM_RAM_CONSOLE_SIZE	0x300000
 
 /* Memory map */
 #define MSM_ION_HEAP_NUM      6

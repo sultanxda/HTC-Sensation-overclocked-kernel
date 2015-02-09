@@ -198,62 +198,6 @@ int pm8xxx_mpp_config(unsigned mpp, struct pm8xxx_mpp_config_data *config)
 }
 EXPORT_SYMBOL_GPL(pm8xxx_mpp_config);
 
-int pm8xxx_dump_mpp(struct seq_file *m, int curr_len, char *gpio_buffer)
-{
-	static const char *ctype[] = { "d_in", "d_out", "bi_dir", "a_in",
-		"a_out", "sink", "dtest_sink", "dtest_out" };
-
-	u8 type, state, ctrl;
-	const char *label;
-	int i, len;
-	char gpio_buf[128];
-	char *title_msg = "---------- PM8xxx MPP ----------";
-	struct pm8xxx_mpp_chip *mpp_chip;
-	struct gpio_chip *gpio_chip;
-
-	if (m) {
-		seq_printf(m, "%s\n", title_msg);
-	} else {
-		pr_info("%s\n", title_msg);
-		curr_len += sprintf(gpio_buffer + curr_len,
-		"%s\n", title_msg);
-	}
-	mutex_lock(&pm8xxx_mpp_chips_lock);
-	list_for_each_entry(mpp_chip, &pm8xxx_mpp_chips, link) {
-
-		gpio_chip = &mpp_chip->gpio_chip;
-		for (i = 0; i < mpp_chip->nmpps; i++) {
-
-			memset(gpio_buf, 0, sizeof(gpio_buf));
-			len = 0;
-
-			pm8xxx_readb(gpio_chip->dev->parent, mpp_chip->base_addr + i, &ctrl);
-			label = gpiochip_is_requested(gpio_chip, i);
-			type = (ctrl & PM8XXX_MPP_TYPE_MASK) >>
-				PM8XXX_MPP_TYPE_SHIFT;
-			state = pm8xxx_mpp_get(gpio_chip, i);
-
-			len += sprintf(gpio_buf + len, "GPIO[%2d]: ", i+1);
-			len += sprintf(gpio_buf + len, "[TYPE]%10s, ", ctype[type]);
-			len += sprintf(gpio_buf + len, "[VAL]%s, ", state? "HIGH" : " LOW");
-			len += sprintf(gpio_buf + len, "[CTRL][0x%02x]", ctrl);
-
-			gpio_buf[127] = '\0';
-			if (m) {
-				seq_printf(m, "%s\n", gpio_buf);
-			} else {
-				pr_info("%s\n", gpio_buf);
-				curr_len += sprintf(gpio_buffer +
-				curr_len, "%s\n", gpio_buf);
-			}
-
-		}
-	}
-	mutex_unlock(&pm8xxx_mpp_chips_lock);
-	return curr_len;
-}
-EXPORT_SYMBOL(pm8xxx_dump_mpp);
-
 static int __devinit pm8xxx_mpp_reg_init(struct pm8xxx_mpp_chip *mpp_chip)
 {
 	int rc, i;
@@ -306,7 +250,7 @@ static int __devinit pm8xxx_mpp_probe(struct platform_device *pdev)
 	mpp_chip->gpio_chip.set = pm8xxx_mpp_set;
 	mpp_chip->gpio_chip.dbg_show = pm8xxx_mpp_dbg_show;
 	mpp_chip->gpio_chip.ngpio = pdata->core_data.nmpps;
-	mpp_chip->gpio_chip.can_sleep = 0; /* Fix me */
+	mpp_chip->gpio_chip.can_sleep = 1;
 	mpp_chip->gpio_chip.dev = &pdev->dev;
 	mpp_chip->gpio_chip.base = pdata->mpp_base;
 	mpp_chip->irq_base = platform_get_irq(pdev, 0);

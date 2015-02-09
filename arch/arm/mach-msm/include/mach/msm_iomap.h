@@ -43,6 +43,8 @@
 #define IOMEM(x)	((void __force __iomem *)(x))
 #endif
 
+#define MSM_DEBUG_UART_SIZE	SZ_4K
+
 #if defined(CONFIG_ARCH_MSM8960) || defined(CONFIG_ARCH_APQ8064) || \
 	defined(CONFIG_ARCH_MSM8930) || defined(CONFIG_ARCH_MSM9615) || \
 	defined(CONFIG_ARCH_MSMCOPPER)
@@ -70,8 +72,8 @@
 #define MSM_SHARED_RAM_BASE	IOMEM(0xFA300000)	/*  2M  */
 #define MSM_SIC_NON_SECURE_BASE	IOMEM(0xFA600000)	/* 64K	*/
 #define MSM_HDMI_BASE		IOMEM(0xFA800000)	/*  4K  */
-#define MSM_RPM_BASE		IOMEM(0xFA801000)	/*  24K	*/
-#define MSM_RPM_MPM_BASE	IOMEM(0xFA807000)	/*  4K	*/
+#define MSM_RPM_BASE		IOMEM(0xFA801000)	/*  4K	*/
+#define MSM_RPM_MPM_BASE	IOMEM(0xFA802000)	/*  4K	*/
 #define MSM_QFPROM_BASE		IOMEM(0xFA700000)	/*  4K  */
 #define MSM_L2CC_BASE		IOMEM(0xFA701000)	/* 4K */
 #define MSM_APCS_GLB_BASE	IOMEM(0xFA702000)	/* 4K */
@@ -101,6 +103,17 @@
 #include "msm_iomap-fsm9xxx.h"
 #else
 #include "msm_iomap-7xxx.h"
+#endif
+
+#if defined(CONFIG_DEBUG_MSM_UART1)
+#define MSM_DEBUG_UART_BASE	0xFB000000
+#define MSM_DEBUG_UART_PHYS	MSM_UART1_PHYS
+#elif defined(CONFIG_DEBUG_MSM_UART2)
+#define MSM_DEBUG_UART_BASE	0xFB000000
+#define MSM_DEBUG_UART_PHYS	MSM_UART2_PHYS
+#elif defined(CONFIG_DEBUG_MSM_UART3)
+#define MSM_DEBUG_UART_BASE	0xFB000000
+#define MSM_DEBUG_UART_PHYS	MSM_UART3_PHYS
 #endif
 
 #endif

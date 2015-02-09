@@ -22,7 +22,6 @@
 #include <linux/syscore_ops.h>
 
 #include <asm/mach/irq.h>
-#include <linux/seq_file.h>
 
 #include <mach/msm_iomap.h>
 #include <mach/gpiomux.h>
@@ -578,112 +577,6 @@ static struct syscore_ops msm_gpio_syscore_ops = {
 	.suspend = msm_gpio_suspend,
 	.resume = msm_gpio_resume,
 };
-
-#define GPIO_FUNC_SEL_BIT 2
-#define GPIO_DRV_BIT 6
-
-int msm_dump_gpios(struct seq_file *m, int curr_len, char *gpio_buffer)
-{
-	unsigned int i, func_sel, dir, pull, drv, value, int_en, int_owner, len;
-	char list_gpio[100];
-	char *title_msg = "------------ MSM GPIO -------------";
-
-	if (m) {
-		seq_printf(m, "%s\n", title_msg);
-	} else {
-		pr_info("%s\n", title_msg);
-		curr_len += sprintf(gpio_buffer + curr_len,
-		"%s\n", title_msg);
-	}
-
-	for (i = msm_gpio.gpio_chip.base; i < msm_gpio.gpio_chip.ngpio; i++) {
-		memset(list_gpio, 0 , sizeof(list_gpio));
-		len = 0;
-
-		len += sprintf(list_gpio + len, "GPIO[%3d]: ", i);
-
-		func_sel = (readl(GPIO_CONFIG(i)) >> GPIO_FUNC_SEL_BIT) & 0x7;
-		len += sprintf(list_gpio + len, "[FS]0x%x, ", func_sel);
-
-		dir = (readl(GPIO_CONFIG(i)) & BIT(GPIO_OE_BIT))>>GPIO_OE_BIT;
-		if (dir) {
-				value = (readl(GPIO_IN_OUT(i)) & BIT(GPIO_OUT_BIT))>>GPIO_OUT_BIT;
-				len += sprintf(list_gpio + len, "[DIR]OUT, [VAL]%s ", value ? "HIGH" : " LOW");
-		} else {
-				value = readl(GPIO_IN_OUT(i)) & BIT(GPIO_IN_BIT);
-				len += sprintf(list_gpio + len, "[DIR] IN, [VAL]%s ", value ? "HIGH" : " LOW");
-		}
-
-		pull = readl(GPIO_CONFIG(i)) & 0x3;
-		switch (pull) {
-		case 0x0:
-			len += sprintf(list_gpio + len, "[PULL]NO, ");
-			break;
-		case 0x1:
-			len += sprintf(list_gpio + len, "[PULL]PD, ");
-			break;
-		case 0x2:
-			len += sprintf(list_gpio + len, "[PULL]KP, ");
-			break;
-		case 0x3:
-			len += sprintf(list_gpio + len, "[PULL]PU, ");
-			break;
-		default:
-			break;
-		}
-
-		drv = (readl(GPIO_CONFIG(i)) >> GPIO_DRV_BIT) & 0x7;
-		len += sprintf(list_gpio + len, "[DRV]%2dmA, ", 2*(drv+1));
-
-		if (!dir) {
-			int_en = readl(GPIO_INTR_CFG(i)) & 0x1;
-			len += sprintf(list_gpio + len, "[INT]%s, ", int_en ? "YES" : " NO");
-			if (int_en) {
-				int_owner = readl(GPIO_INTR_CFG_SU(i)) & 0x7;
-				switch (int_owner) {
-				case 0x0:
-					len += sprintf(list_gpio + len, "MSS_PROC, ");
-					break;
-				case 0x1:
-					len += sprintf(list_gpio + len, "SPS_PROC, ");
-					break;
-				case 0x2:
-					len += sprintf(list_gpio + len, " LPA_DSP, ");
-					break;
-				case 0x3:
-					len += sprintf(list_gpio + len, "RPM_PROC, ");
-					break;
-				case 0x4:
-					len += sprintf(list_gpio + len, " SC_PROC, ");
-					break;
-				case 0x5:
-					len += sprintf(list_gpio + len, "RESERVED, ");
-					break;
-				case 0x6:
-					len += sprintf(list_gpio + len, "RESERVED, ");
-					break;
-				case 0x7:
-					len += sprintf(list_gpio + len, "    NONE, ");
-					break;
-				default:
-					break;
-				}
-			}
-		}
-
-		list_gpio[99] = '\0';
-		if (m) {
-			seq_printf(m, "%s\n", list_gpio);
-		} else {
-			pr_info("%s\n", list_gpio);
-			curr_len += sprintf(gpio_buffer +
-			curr_len, "%s\n", list_gpio);
-		}
-	}
-
-	return curr_len;
-}
-EXPORT_SYMBOL(msm_dump_gpios);
 
 static int __init msm_gpio_init(void)
 {

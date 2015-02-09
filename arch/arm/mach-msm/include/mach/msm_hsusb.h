@@ -1,7 +1,6 @@
 /* linux/include/mach/hsusb.h
  *
  * Copyright (C) 2008 Google, Inc.
- * Copyright (c) 2009-2011, The Linux Foundation. All rights reserved.
  * Copyright (c) 2009-2012, The Linux Foundation. All rights reserved.
  * Author: Brian Swetland <swetland@google.com>
  *
