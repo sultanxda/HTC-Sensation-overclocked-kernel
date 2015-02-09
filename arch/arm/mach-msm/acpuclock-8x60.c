@@ -40,7 +40,7 @@
 #define COMPLEX_SLEW		7
 
 /* PLL calibration limits.
- * The PLL hardware is capable of 384MHz to 1512MHz. The L_VALs
+ * The PLL hardware is capable of 384MHz to 1536MHz. The L_VALs
  * used for calibration should respect these limits. */
 #define L_VAL_SCPLL_CAL_MIN	0x08 /* =  432 MHz with 27MHz source */
 #define L_VAL_SCPLL_CAL_MAX	0x24 /* = 1994 MHz with 27MHz source */
@@ -807,7 +807,7 @@ static int __cpuinit acpuclock_cpu_callback(struct notifier_block *nfb,
 	case CPU_UP_PREPARE:
 	case CPU_UP_PREPARE_FROZEN:
 		if (WARN_ON(!prev_khz[cpu]))
-			prev_khz[cpu] = acpu_freq_tbl->acpuclk_khz;
+			return NOTIFY_BAD;
 		acpuclk_8x60_set_rate(cpu, prev_khz[cpu], SETRATE_HOTPLUG);
 		break;
 	default:
@@ -848,16 +848,6 @@ static struct acpuclk_data acpuclk_8x60_data = {
 	.power_collapse_khz = MAX_AXI,
 	.wait_for_irq_khz = MAX_AXI,
 };
-
-int processor_name_read_proc(char *page, char **start, off_t off,
-			   int count, int *eof, void *data)
-{
-	char *p = page;
-
-	p += sprintf(p, "1.5GHz dual-core");
-
-	return p - page;
-}
 
 static int __init acpuclk_8x60_init(struct acpuclk_soc_data *soc_data)
 {

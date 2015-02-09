@@ -1,7 +1,7 @@
 /* linux/arch/arm/mach-msm/devices.h
  *
  * Copyright (C) 2008 Google, Inc.
- * Copyright (c) 2009-2011, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2013, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -66,6 +66,14 @@ extern struct platform_device msm8960_device_qup_i2c_gsbi12;
 extern struct platform_device msm8960_device_qup_spi_gsbi1;
 extern struct platform_device msm8960_device_qup_spi_gsbi10;
 extern struct platform_device msm8960_gemini_device;
+extern struct platform_device msm8960_device_csiphy0;
+extern struct platform_device msm8960_device_csiphy1;
+extern struct platform_device msm8960_device_csid0;
+extern struct platform_device msm8960_device_csid1;
+extern struct platform_device msm8960_device_ispif;
+extern struct platform_device msm8960_device_vfe;
+extern struct platform_device msm8960_device_vpe;
+extern struct platform_device msm8960_device_cache_erp;
 
 extern struct platform_device apq8064_device_uart_gsbi1;
 extern struct platform_device apq8064_device_uart_gsbi3;
@@ -74,12 +82,16 @@ extern struct platform_device apq8064_device_qup_spi_gsbi5;
 extern struct platform_device apq8064_slim_ctrl;
 extern struct platform_device apq8064_device_ssbi_pmic1;
 extern struct platform_device apq8064_device_ssbi_pmic2;
+extern struct platform_device apq8064_device_cache_erp;
 
 extern struct platform_device msm9615_device_uart_gsbi4;
 extern struct platform_device msm9615_device_qup_i2c_gsbi5;
 extern struct platform_device msm9615_device_qup_spi_gsbi3;
+extern struct platform_device msm9615_slim_ctrl;
 extern struct platform_device msm9615_device_ssbi_pmic1;
 extern struct platform_device msm9615_device_tsens;
+extern struct platform_device msm_bus_9615_sys_fabric;
+extern struct platform_device msm_bus_def_fab;
 
 extern struct platform_device msm_device_sdc1;
 extern struct platform_device msm_device_sdc2;
@@ -120,6 +132,7 @@ extern struct platform_device msm_gsbi12_qup_i2c_device;
 
 extern struct platform_device msm_slim_ctrl;
 extern struct platform_device msm_device_sps;
+extern struct platform_device msm_device_usb_bam;
 extern struct platform_device msm_device_sps_apq8064;
 extern struct platform_device msm_device_bam_dmux;
 extern struct platform_device msm_device_smd;
@@ -148,6 +161,7 @@ extern struct platform_device msm_device_ssbi_pmic2;
 extern struct platform_device msm_device_ssbi1;
 extern struct platform_device msm_device_ssbi2;
 extern struct platform_device msm_device_ssbi3;
+extern struct platform_device msm_device_ssbi6;
 extern struct platform_device msm_device_ssbi7;
 
 #ifdef CONFIG_MSM_SSBI
@@ -160,6 +174,8 @@ extern struct platform_device msm_gsbi1_qup_spi_device;
 extern struct platform_device msm_device_vidc_720p;
 
 extern struct platform_device msm_pcm;
+extern struct platform_device msm_multi_ch_pcm;
+extern struct platform_device msm_lowlatency_pcm;
 extern struct platform_device msm_pcm_routing;
 extern struct platform_device msm_cpudai0;
 extern struct platform_device msm_cpudai1;
@@ -249,7 +265,9 @@ extern struct pil_device peripheral_dsps;
 extern struct platform_device led_pdev;
 
 extern struct platform_device msm_rpm_device;
+extern struct platform_device msm_rpm_stat_device;
 extern struct platform_device msm_device_rng;
+extern struct platform_device apq8064_device_rng;
 
 #if defined(CONFIG_CRYPTO_DEV_QCRYPTO) || \
 		defined(CONFIG_CRYPTO_DEV_QCRYPTO_MODULE)
@@ -268,10 +286,17 @@ extern struct platform_device msm9615_device_watchdog;
 extern struct platform_device msm_etb_device;
 extern struct platform_device msm_tpiu_device;
 extern struct platform_device msm_funnel_device;
-extern struct platform_device msm_ptm_device;
+extern struct platform_device msm_etm_device;
 #endif
+
+extern struct platform_device msm8960_cpu_idle_device;
+
+extern struct platform_device msm8960_msm_gov_device;
 
 extern struct platform_device msm_device_csic0;
 extern struct platform_device msm_device_csic1;
 extern struct platform_device msm_device_vfe;
 extern struct platform_device msm_device_vpe;
+
+extern struct platform_device msm8960_iommu_domain_device;
+extern struct platform_device apq8064_iommu_domain_device;

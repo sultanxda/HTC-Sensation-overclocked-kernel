@@ -59,7 +59,7 @@
 #include <sound/apr_audio.h>
 #include "rpm_stats.h"
 #include "mpm.h"
-#include <mach/msm_watchdog.h>
+#include "msm_watchdog.h"
 
 /* Address of GSBI blocks */
 #define MSM_GSBI1_PHYS	0x16000000

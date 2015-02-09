@@ -25,11 +25,7 @@
 #include <linux/leds-pmic8058.h>
 #include <linux/clkdev.h>
 #include <linux/of_platform.h>
-#if defined(CONFIG_ARCH_MSM7X30)
-#include <linux/msm_ssbi_7x30.h>
-#else
 #include <linux/msm_ssbi.h>
-#endif
 #include <mach/msm_bus.h>
 
 struct msm_camera_io_ext {
@@ -72,10 +68,8 @@ struct msm_camera_device_platform_data {
 	uint8_t is_ispif;
 	uint8_t is_vpe;
 	struct msm_bus_scale_pdata *cam_bus_scale_table;
-#if 1	
 	int (*camera_csi_on) (void);
 	int (*camera_csi_off) (void);
-#endif	
 };
 enum msm_camera_csi_data_format {
 	CSI_8BIT,
@@ -134,15 +128,9 @@ struct msm_camera_sensor_flash_current_driver {
 	const struct pmic8058_leds_platform_data *driver_channel;
 };
 
-enum msm_camera_ext_led_flash_id {
-	MAM_CAMERA_EXT_LED_FLASH_SC628A,
-	MAM_CAMERA_EXT_LED_FLASH_TPS61310,
-};
-
 struct msm_camera_sensor_flash_external {
 	uint32_t led_en;
 	uint32_t led_flash_en;
-	enum msm_camera_ext_led_flash_id flash_id;
 	struct msm_cam_expander_info *expander_info;
 };
 
@@ -204,24 +192,13 @@ struct camera_flash_cfg {
 
 struct msm_camera_sensor_strobe_flash_data {
 	uint8_t flash_trigger;
-	uint8_t flash_charge; 
+	uint8_t flash_charge; /* pin for charge */
 	uint8_t flash_charge_done;
 	uint32_t flash_recharge_duration;
 	uint32_t irq;
 	spinlock_t spin_lock;
 	spinlock_t timer_lock;
 	int state;
-};
-
-struct msm_camera_rawchip_info {
-	int rawchip_reset;
-	int rawchip_intr0;
-	int rawchip_intr1;
-	uint8_t rawchip_spi_freq;
-	uint8_t rawchip_mclk_freq;
-	int (*camera_rawchip_power_on)(void);
-	int (*camera_rawchip_power_off)(void);
-	int (*rawchip_use_ext_1v2)(void);
 };
 
 enum rawchip_enable_type {
@@ -345,9 +322,7 @@ struct msm_actuator_info {
 	int bus_id;
 	int vcm_pwd;
 	int vcm_enable;
-	
 	int use_rawchip_af;
-	
 };
 
 struct msm_camera_sensor_info {
@@ -370,20 +345,14 @@ struct msm_camera_sensor_info {
 	char *eeprom_data;
 	enum msm_camera_type camera_type;
 	enum msm_sensor_type sensor_type;
-
-    uint16_t num_actuator_info_table;
+	uint16_t num_actuator_info_table;
 	struct msm_actuator_info **actuator_info_table;
-
 	struct msm_actuator_info *actuator_info;
 	int pmic_gpio_enable;
-
-	
 	struct msm_camera_gpio_conf *gpio_conf;
 	int (*camera_power_on)(void);
 	int (*camera_power_off)(void);
 	int use_rawchip;
-#if 1 
-	
 	void(*camera_clk_switch)(void);
 	int power_down_disable; 
 	int full_size_preview; 
@@ -398,9 +367,6 @@ struct msm_camera_sensor_info {
 	uint32_t kpi_sensor_start;
 	uint32_t kpi_sensor_end;
 	uint8_t (*preview_skip_frame)(void);
-#endif
-	
-
 };
 
 struct msm_camera_board_info {
@@ -688,26 +654,29 @@ struct isp1763_platform_data {
 #ifdef CONFIG_OF_DEVICE
 void msm_copper_init(struct of_dev_auxdata **);
 #endif
-void  msm_add_devices(void);
+void msm_add_devices(void);
 void msm_copper_add_devices(void);
-void  msm_map_common_io(void);
-void  msm_map_qsd8x50_io(void);
-void  msm_map_msm8x60_io(void);
-void  msm_map_msm8960_io(void);
-void  msm_map_msm8930_io(void);
-void  msm_map_apq8064_io(void);
-void  msm_map_msm7x30_io(void);
-void  msm_map_fsm9xxx_io(void);
+void msm_map_common_io(void);
+void msm_map_qsd8x50_io(void);
+void msm_map_msm8x60_io(void);
+void msm_map_msm8960_io(void);
+void msm_map_msm8930_io(void);
+void msm_map_apq8064_io(void);
+void msm_map_msm7x30_io(void);
+void msm_map_fsm9xxx_io(void);
 void msm_map_copper_io(void);
-void  msm_init_irq(void);
+void msm_init_irq(void);
 void msm_copper_init_irq(void);
+void vic_handle_irq(struct pt_regs *regs);
+void msm_copper_reserve(void);
+void msm_copper_very_early(void);
 
 struct mmc_platform_data;
-int  msm_add_sdcc(unsigned int controller,
+int msm_add_sdcc(unsigned int controller,
 		struct mmc_platform_data *plat);
 
 struct msm_usb_host_platform_data;
-int  msm_add_host(unsigned int host,
+int msm_add_host(unsigned int host,
 		struct msm_usb_host_platform_data *plat);
 #if defined(CONFIG_USB_FUNCTION_MSM_HSUSB) || defined(CONFIG_USB_MSM_72K) || defined(CONFIG_USB_MSM_72K_MODULE)    || defined(CONFIG_USB_CI13XXX_MSM)
 int usb_get_connect_type(void);
@@ -815,13 +784,4 @@ extern unsigned int msm_shared_ram_phys; /* defined in arch/arm/mach-msm/io.c */
 extern int emmc_partition_read_proc(char *page, char **start, off_t off,
 				int count, int *eof, void *data);
 extern const char *get_partition_name_by_num(int partnum);
-
-#ifdef CONFIG_ARCH_MSM8X60
-extern int processor_name_read_proc(char *page, char **start, off_t off,
-			   int count, int *eof, void *data);
-#endif
-
-extern int dying_processors_read_proc(char *page, char **start, off_t off,
-			   int count, int *eof, void *data);
-
 #endif
