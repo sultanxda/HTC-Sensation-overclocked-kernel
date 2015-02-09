@@ -250,7 +250,7 @@ static int __devinit pm8xxx_mpp_probe(struct platform_device *pdev)
 	mpp_chip->gpio_chip.set = pm8xxx_mpp_set;
 	mpp_chip->gpio_chip.dbg_show = pm8xxx_mpp_dbg_show;
 	mpp_chip->gpio_chip.ngpio = pdata->core_data.nmpps;
-	mpp_chip->gpio_chip.can_sleep = 1;
+	mpp_chip->gpio_chip.can_sleep = 0; /* Fix me */
 	mpp_chip->gpio_chip.dev = &pdev->dev;
 	mpp_chip->gpio_chip.base = pdata->mpp_base;
 	mpp_chip->irq_base = platform_get_irq(pdev, 0);
