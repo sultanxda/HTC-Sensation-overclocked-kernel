@@ -22,6 +22,9 @@
 
 #include <linux/mfd/pm8xxx/core.h>
 #include <linux/input/pmic8xxx-pwrkey.h>
+#ifdef CONFIG_TOUCHSCREEN_CYPRESS_SWEEP2WAKE
+#include <linux/cy8c_tma_ts.h>
+#endif
 
 #define PON_CNTL_1 0x1C
 #define PON_CNTL_PULL_UP BIT(7)
@@ -194,6 +197,10 @@ static int __devinit pmic8xxx_pwrkey_probe(struct platform_device *pdev)
 		input_sync(pwrkey->pwr);
 	}
 
+#ifdef CONFIG_TOUCHSCREEN_CYPRESS_SWEEP2WAKE
+	sweep2wake_setdev(pwr);
+	printk(KERN_INFO "[sweep2wake]: set device %s\n", pwr->name);
+#endif
 	err = request_any_context_irq(key_press_irq, pwrkey_press_irq,
 		IRQF_TRIGGER_RISING, "pmic8xxx_pwrkey_press", pwrkey);
 	if (err < 0) {
