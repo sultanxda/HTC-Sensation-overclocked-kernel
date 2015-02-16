@@ -1110,53 +1110,6 @@ static struct msm_usb_host_platform_data msm_usb_host_pdata = {
 	.power_budget	= 390,
 };
 #endif
-/* static void msm_hsusb_vbus_power(unsigned phy_info, int on) */
-static void msm_hsusb_vbus_power(bool on)
-{
-	static struct regulator *votg_5v_switch;
-	static struct regulator *ext_5v_reg;
-	static int vbus_is_on;
-
-	/* If VBUS is already on (or off), do nothing. */
-	if (on == vbus_is_on)
-		return;
-
-	if (!votg_5v_switch) {
-		votg_5v_switch = regulator_get(NULL, "8901_usb_otg");
-		if (IS_ERR(votg_5v_switch)) {
-			pr_err("%s: unable to get votg_5v_switch\n", __func__);
-			return;
-		}
-	}
-	if (!ext_5v_reg) {
-		ext_5v_reg = regulator_get(NULL, "8901_mpp0");
-		if (IS_ERR(ext_5v_reg)) {
-			pr_err("%s: unable to get ext_5v_reg\n", __func__);
-			return;
-		}
-	}
-	if (on) {
-		if (regulator_enable(ext_5v_reg)) {
-			pr_err("%s: Unable to enable the regulator:"
-					" ext_5v_reg\n", __func__);
-			return;
-		}
-		if (regulator_enable(votg_5v_switch)) {
-			pr_err("%s: Unable to enable the regulator:"
-					" votg_5v_switch\n", __func__);
-			return;
-		}
-	} else {
-		if (regulator_disable(votg_5v_switch))
-			pr_err("%s: Unable to enable the regulator:"
-				" votg_5v_switch\n", __func__);
-		if (regulator_disable(ext_5v_reg))
-			pr_err("%s: Unable to enable the regulator:"
-				" ext_5v_reg\n", __func__);
-	}
-
-	vbus_is_on = on;
-}
 
 /* ToDo: mark it */
 /* #if defined(CONFIG_USB_GADGET_MSM_72K) || defined(CONFIG_USB_EHCI_MSM_72K) */
@@ -1166,7 +1119,6 @@ static struct msm_otg_platform_data msm_otg_pdata = {
 	.mode			= USB_OTG,
 	.otg_control		= OTG_PMIC_CONTROL,
 	.phy_type		= CI_45NM_INTEGRATED_PHY,
-	.vbus_power		= msm_hsusb_vbus_power,
 	.power_budget		= 750,
 	.ldo_3v3_name	= "8058_l6",
 	.ldo_1v8_name	= "8058_l7",
