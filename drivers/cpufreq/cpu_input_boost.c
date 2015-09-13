@@ -62,15 +62,11 @@ static void set_boost(struct boost_policy *b, unsigned int boost)
 
 static void boost_all_cpus(unsigned int freq, unsigned int ms)
 {
-	struct boost_policy *b;
-	unsigned int cpu;
+	struct boost_policy *b = &per_cpu(boost_info, 0);
 
-	for_each_possible_cpu(cpu) {
-		b = &per_cpu(boost_info, cpu);
-		b->boost_freq = freq;
-		b->boost_ms = ms;
-		queue_work(boost_wq, &b->boost_work);
-	}
+	b->boost_freq = freq;
+	b->boost_ms = ms;
+	queue_work(boost_wq, &b->boost_work);
 }
 
 static void __cpuinit cpu_boost_main(struct work_struct *work)
